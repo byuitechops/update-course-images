@@ -1,0 +1,26 @@
+{
+  "name": "update-course-images",
+  "version": "1.0.0",
+  "description": "This will update the image that is on the home page and the course image (the one that gets displayed for the course in Dashboard)",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/byuitechops/update-course-images.git"
+  },
+  "author": "Sam McGrath",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/byuitechops/update-course-images/issues"
+  },
+  "homepage": "https://github.com/byuitechops/update-course-images#readme",
+  "dependencies": {
+    "axios": "^0.18.0",
+    "canvas-api-wrapper": "^3.3.4",
+    "fs": "0.0.1-security",
+    "request": "^2.88.0"
+  }
+}
