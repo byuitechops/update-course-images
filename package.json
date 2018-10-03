@@ -18,9 +18,9 @@
   },
   "homepage": "https://github.com/byuitechops/update-course-images#readme",
   "dependencies": {
-    "axios": "^0.18.0",
+    "blob": "0.0.4",
     "canvas-api-wrapper": "^3.3.4",
     "fs": "0.0.1-security",
-    "request": "^2.88.0"
+    "restler-base": "^3.4.6"
   }
 }

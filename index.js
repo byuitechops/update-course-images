@@ -1,26 +1,28 @@
 const fs = require('fs');
-const axios = require('axios');
+const rest = require('restler-base')
 const canvas = require('canvas-api-wrapper');
 
 /**
  * uploadFileMaster
  * @param {Int} courseId  - the course id for the upload 
  * @param {String} path   - string that contains filepath
- * @param {Int} folderId  - id of course_image folder
  * 
  * 
  */
-async function uploadFileMaster(path, folderId) {
-   try {
-      const parentFolder = 'course_image';
+async function uploadFileMaster(courseId, path, bytes) {
+  try {
+    const parentFolder = 'course_image';
 
-      const respObj = await notifyCanvasFile(path, parentFolder, folderId);
-      const fileUploadResponse = await uploadFileCanvas(respObj, path);
+    const respObj = await notifyCanvasFile(courseId, path, parentFolder, bytes);
+    const fileUploadResponse = await uploadFileCanvas(respObj, path);
 
-      console.log(fileUploadResponse);
-   } catch (err) {
-      return err;
-   }
+    console.log(respObj);
+    console.log('-----------------------------');
+    console.log(fileUploadResponse);
+
+  } catch (err) {
+    return err;
+  }
 }
 
 /**
@@ -30,17 +32,15 @@ async function uploadFileMaster(path, folderId) {
  * 
  * 
  */
-async function notifyCanvasFile(path, parentFolder, folderId) {
-   const bytes = fs.statSync(path)['size'];
+async function notifyCanvasFile(courseId, path, parentFolder, bytes) {
+  const resObj = await canvas.post(`/api/v1/courses/${courseId}/files`, {
+    'name': path,
+    'size': bytes,
+    'content-type': 'image/jpeg',
+    'parent_folder_path': parentFolder
+  });
 
-   const resObj = await canvas.post(`/api/v1/folders/${folderId}/files`, {
-      'name': path,
-      'size': bytes,
-      'parent_folder_path': parentFolder
-   });
-
-   console.log(resObj);
-   return resObj;
+  return resObj;
 }
 
 /**
@@ -56,33 +56,26 @@ async function notifyCanvasFile(path, parentFolder, folderId) {
  *  - last parameter is file parameter 
  *  - Any other parameters specified in the upload_params response between first and last
  */
-async function uploadFileCanvas(resObj, path) {
-   try {
-      const response = await axios.post(resObj.upload_url, {
-         'key': resObj.upload_params.key,
-         'upload_params': resObj.upload_params,
-         'file': path
-      });
-      console.log(response);
-      return response;
-   } catch (err) {
-      console.log(err);
-   }
-}
-
-async function getFolders(courseId) {
-   const canvasFolderName = 'course_image';
-   const response = await canvas.get(`/api/v1/courses/${courseId}/folders`);
-
-   return response.filter(ele => ele.name === canvasFolderName)[0].id;
+function uploadFileCanvas(resObj, path) {
+  fs.stat(path, (err, stats) => {
+    rest.post(resObj.upload_url, {
+      multipart: true,
+      data: {
+        'key': resObj.upload_params.key,
+        'upload_params': resObj.upload_params,
+        'file': rest.file(path, null, stats.size, null, 'image/jpeg')
+      }
+    }).on('complete', (data) => {
+      console.log(data);
+    });
+  });
 }
 
 //start here
 (async () => {
-   const courseId = 21050;
-   const filename = 'homeimage.jpg';
+  const courseId = 21050;
+  const filename = 'homeimage.jpg';
+  const bytes = fs.statSync(filename)['size'];
 
-   const folderId = await getFolders(courseId);
-   await uploadFileMaster(filename, folderId);
-
+  await uploadFileMaster(courseId, filename, bytes);
 })();
