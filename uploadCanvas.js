@@ -1,5 +1,5 @@
 const fs = require('fs');
-const got = require('got');
+const request = require('request');
 const canvas = require('canvas-api-wrapper');
 const FormData = require('form-data');
 
@@ -17,9 +17,6 @@ async function uploadFileMaster(courseId, path, bytes) {
       const respObj = await notifyCanvasFile(courseId, path, parentFolder, bytes);
       const fileUploadResponse = await uploadFileCanvas(respObj, path);
 
-      // console.log(respObj);
-      // console.log('-----------------------------');
-      console.log(fileUploadResponse);
 
    } catch (err) {
       return err;
@@ -35,7 +32,7 @@ async function uploadFileMaster(courseId, path, bytes) {
  */
 async function notifyCanvasFile(courseId, path, parentFolder, bytes) {
    const resObj = await canvas.post(`/api/v1/courses/${courseId}/files`, {
-      'name': path,
+      'name': 'homeImage.jpg',
       'size': bytes,
       'content-type': 'image/jpeg',
       'parent_folder_path': parentFolder
@@ -58,45 +55,28 @@ async function notifyCanvasFile(courseId, path, parentFolder, bytes) {
  *  - Any other parameters specified in the upload_params response between first and last
  */
 async function uploadFileCanvas(resObj) {
-   let body = new FormData();
-   Object.keys(resObj.upload_params).forEach(key => {
-      body.append(key, resObj.upload_params[key])
-   });
-   body.append('file', fs.createReadStream('homeimage.jpg'));
+   let formData = resObj.upload_params;
+   formData.file = fs.createReadStream('homeimage.jpg');
 
-   let options = {
-      method: 'POST',
-      throwHttpErrors: false,
-      body: body,
-      headers: {
-
+   request.post({
+      url: resObj.upload_url,
+      formData: formData
+   }, function (err, httpResponse, body) {
+      if (err) {
+         return console.error('upload failed:', err);
       }
-   }
+      console.log('Upload successful!  Server responded with:', body);
+   });
+}
 
-   //here
-   try {
-      const response = await got(resObj.upload_url, options);
-
-      return response;
-   } catch (err) {
-      console.log(err);
-      return;
-   }
-
-
-   // fs.stat(path, (err, stats) => {
-   //    rest.post(resObj.upload_url, {
-   //       multipart: true,
-   //       data: {
-   //          'key': resObj.upload_params.key,
-   //          'upload_params': resObj.upload_params,
-   //          'file': rest.file(path, null, stats.size, null, 'image/jpeg')
-   //       }
-   //    }).on('complete', (data) => {
-   //       console.log(data);
-   //    });
-   // });
-
+/**
+ * checkFileCanvas
+ * @param {string} redirectUrl - an URL string
+ * 
+ * This function simply makes a GET request to the redirectURL
+ * to "complete" the upload process
+ */
+async function checkFileCanvas(redirectUrl) {
 
 }
 
