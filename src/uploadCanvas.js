@@ -67,7 +67,7 @@ async function notifyCanvasFile(courseId, path, parentFolder, bytes) {
  */
 function uploadFileCanvas(resObj, uploadFileCanvasCallback) {
    let formData = resObj.upload_params;
-   formData.file = fs.createReadStream('homeimage.jpg');
+   formData.file = fs.createReadStream('../homeimage.jpg');
 
    request.post({
       url: resObj.upload_url,
@@ -104,7 +104,7 @@ function checkFileCanvas(redirectUrl, checkFileCanvasCallback) {
 //start here
 (async () => {
    const courseId = 21050;
-   const filename = 'homeimage.jpg';
+   const filename = '../homeimage.jpg';
    const bytes = fs.statSync(filename)['size'];
 
    await uploadFileMaster(courseId, filename, bytes);
