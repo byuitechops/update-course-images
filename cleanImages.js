@@ -4,7 +4,7 @@ const path = require('path');
 const asyncLib = require('async');
 
 const tempArr = [
-   'acctg100_dashboard.jpg',
+   'acctg100_dashboard (1).jpg',
    'acctg100_homeImage.jpg',
    'acctg180_dashboard.jpg',
    'acctg180_homeImage.jpg',
@@ -33,16 +33,19 @@ const tempArr = [
    'acctg456_dashboard.jpg',
    'acctg456_homeimage.jpg',
    'acctg499_dashboard.jpg',
-   'acctg499_homeimage.jpg',
-   'acctgLab_dashboard.jpg',
+   'acctg499_homeimage.jpg'
 ];
 
 function prepFiles(files) {
-   return files.map(ele => removeDuplicateTag(path.basename(ele, '.jpg')));
+   //strip all (1), (2) or anything of like that and then removes all '.jpg'
+   return tempArr.map(ele => ({
+      'file': removeDuplicateTag(path.basename(ele, '.jpg')), //get name without duplicate tag and file extension
+      'path': ele //preserve file path
+   }));
 }
 
 function removeDuplicateTag(file) {
-   return file.splice(file.indexOf('(')).trim();
+   return (file.match(/(\(|\))/gmi)) ? file.slice(0, file.indexOf('(')).trim() : file;
 }
 
 function retrieveFiles(retrieveFilesCallback) {
@@ -55,18 +58,23 @@ function retrieveFiles(retrieveFilesCallback) {
       }
 
       let newFiles = prepFiles(files);
+      let practiceFiles = breakFiles(newFiles.map(newFile => splitName(newFile)));
+      console.log(JSON.stringify(practiceFiles));
+
       retrieveFilesCallback(null, newFiles);
    });
 }
 
 function splitName(name) {
-   let nameSplit = name.toLowerCase().split('_');
+   let nameSplit = name.file.toLowerCase().split('_');
    let course = nameSplit[0];
    let type = nameSplit[1];
+   let path = name.path;
 
    return {
       course,
-      type
+      type,
+      path
    };
 }
 
@@ -79,17 +87,28 @@ function createDirectory(createDirectoryCallback) {
          return;
       }
 
+      let something = createListOfDirectories();
       createDirectoryCallback(null);
    });
 }
 
+function createListOfDirectories() {
+   let files = prepFiles([]);
+   let newFiles = breakFiles(files.map(file => splitName(file)));
+   let path = './updatedImages';
+
+   //fs.mkdirSync(`${path}/${file}`)
+   newFiles.forEach(file => fs.mkdirSync(`${path}/${file[0]}`));
+}
+
 function breakFiles(files) {
-   return _.groupBy(files, 'course');
+   return _.pairs(_.groupBy(files, 'course'));
 }
 
 (() => {
    const functions = [
-      retrieveFiles
+      // retrieveFiles
+      createDirectory
    ];
 
    asyncLib.waterfall(functions, (err, results) => {
@@ -98,7 +117,7 @@ function breakFiles(files) {
          return;
       }
 
-      console.log(results);
+      // console.log(results);
       console.log('Renamed each file successfully.');
       return;
    });

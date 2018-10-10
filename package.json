@@ -4,8 +4,7 @@
   "description": "This will update the image that is on the home page and the course image (the one that gets displayed for the course in Dashboard)",
   "main": "index.js",
   "scripts": {
-    "start": "node uploadCanvas.js",
-    "starts": "node updateCoursePicture.js",
+    "start": "node cleanImages.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -20,15 +19,11 @@
   "homepage": "https://github.com/byuitechops/update-course-images#readme",
   "dependencies": {
     "async": "^2.6.1",
-    "blob": "0.0.4",
     "canvas-api-wrapper": "^3.3.4",
-    "cheerio": "^1.0.0-rc.2",
-    "form-data": "^2.3.2",
     "fs": "0.0.1-security",
     "fs-extra": "^7.0.0",
     "path": "^0.12.7",
     "request": "^2.88.0",
-    "restler-base": "^3.4.6",
     "underscore": "^1.9.1"
   }
 }
