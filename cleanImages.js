@@ -3,42 +3,9 @@ const fs = require('fs');
 const path = require('path');
 const asyncLib = require('async');
 
-const tempArr = [
-   'acctg100_dashboard (1).jpg',
-   'acctg100_homeImage.jpg',
-   'acctg180_dashboard.jpg',
-   'acctg180_homeImage.jpg',
-   'acctg201_dashboard.jpg',
-   'acctg201_homeImage.jpg',
-   'acctg202_dashboard.jpg',
-   'acctg202_homeimage.jpg',
-   'acctg301_dashboard.jpg',
-   'acctg301_homeimage.jpg',
-   'acctg302_dashboard.jpg',
-   'acctg302_homeimage.jpg',
-   'acctg312_dashboard.jpg',
-   'acctg312_homeimage.jpg',
-   'acctg321_dashboard.jpg',
-   'acctg321_homeimage.jpg',
-   'acctg322_dashboard.jpg',
-   'acctg322_homeimage.jpg',
-   'acctg333A_dashboard.jpg',
-   'acctg333A_homeimage.jpg',
-   'acctg333B_dashboard.jpg',
-   'acctg333B_homeimage.jpg',
-   'acctg344_dashboard.jpg',
-   'acctg344_homeimage.jpg',
-   'acctg403_dashboard.jpg',
-   'acctg403_homeimage.jpg',
-   'acctg456_dashboard.jpg',
-   'acctg456_homeimage.jpg',
-   'acctg499_dashboard.jpg',
-   'acctg499_homeimage.jpg'
-];
-
 function prepFiles(files) {
    //strip all (1), (2) or anything of like that and then removes all '.jpg'
-   return tempArr.map(ele => ({
+   return files.map(ele => ({
       'file': removeDuplicateTag(path.basename(ele, '.jpg')), //get name without duplicate tag and file extension
       'path': ele //preserve file path
    }));
@@ -57,11 +24,9 @@ function retrieveFiles(retrieveFilesCallback) {
          return;
       }
 
-      let newFiles = prepFiles(files);
-      let practiceFiles = breakFiles(newFiles.map(newFile => splitName(newFile)));
-      console.log(JSON.stringify(practiceFiles));
+      let filesArray = breakFiles(prepFiles(files).map(file => splitName(file)));
 
-      retrieveFilesCallback(null, newFiles);
+      retrieveFilesCallback(null, filesArray);
    });
 }
 
@@ -78,7 +43,7 @@ function splitName(name) {
    };
 }
 
-function createDirectory(createDirectoryCallback) {
+function createDirectory(filesArray, createDirectoryCallback) {
    let path = './updatedImages';
 
    fs.mkdir(path, (err) => {
@@ -87,18 +52,46 @@ function createDirectory(createDirectoryCallback) {
          return;
       }
 
-      let something = createListOfDirectories();
-      createDirectoryCallback(null);
+      createListOfDirectories(path, filesArray);
+      moveFiles(path, filesArray, (err) => {
+         if (err) {
+            console.error(err);
+            return;
+         }
+
+         createDirectoryCallback(null);
+      });
    });
 }
 
-function createListOfDirectories() {
-   let files = prepFiles([]);
-   let newFiles = breakFiles(files.map(file => splitName(file)));
-   let path = './updatedImages';
+function createListOfDirectories(path, filesArray) {
+   filesArray.map(file => fs.mkdirSync(`${path}/${file[0]}`));
+}
 
-   //fs.mkdirSync(`${path}/${file}`)
-   newFiles.forEach(file => fs.mkdirSync(`${path}/${file[0]}`));
+function moveFiles(path, filesArray, moveFilesCallback) {
+   asyncLib.each(filesArray, (files, eachCallback) => {
+      console.log(files);
+      callback(null);
+   }, (eachErr) => {
+      if (eachErr) {
+         moveFilesCallback(eachErr);
+         return;
+      }
+
+      moveFilesCallback(null);
+   });
+
+   // let oldPath = './images';
+   // filesArray.map(files => Object.keys(files[1]).forEach(key => {
+   //    fs.rename(`${oldPath}/${files[1][key].path}`, `${path}/${files[1][key].path}`, (err) => {
+   //       if (err) {
+   //          console.log(err);
+   //          return;
+   //       }
+
+   //       console.log(`Success: moved ${oldPath}/${files[1][key].path} to ${path}/${files[1][key].path}`);
+   //    })
+   // }));
 }
 
 function breakFiles(files) {
@@ -107,7 +100,7 @@ function breakFiles(files) {
 
 (() => {
    const functions = [
-      // retrieveFiles
+      retrieveFiles,
       createDirectory
    ];
 
