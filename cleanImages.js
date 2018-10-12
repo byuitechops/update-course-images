@@ -86,13 +86,25 @@ function moveFiles(path, filesArray, moveFilesCallback) {
       let errorThrew = null;
       Object.keys(files[0]).forEach(key => {
          if (files[1][key]) {
-            fs.rename(`${oldPath}/${files[1][key].path}`, `${path}/${files[0]}/${files[1][key].path}`, (err) => {
+            let name = files[1][key].path.toLowerCase().split('_');
+            let course = name[0];
+            let type = name[1];
+            let newPath = '';
+
+            if (/(homeimage)+/.test(name[1])) {
+               let temp = name[1].split('i');
+               type = temp[0] + 'I' + temp[1];
+            }
+
+            newPath = `${course}_${type}`;
+
+            fs.rename(`${oldPath}/${files[1][key].path}`, `${path}/${files[0]}/${newPath}`, (err) => {
                if (err) {
                   errorThrew = err;
                   return;
                }
 
-               console.log(`Success: moved ${oldPath}/${files[1][key].path} to ${path}/${files[0]}/${files[1][key].path}`);
+               console.log(`Success: moved ${oldPath}/${files[1][key].path} to ${path}/${files[0]}/${newPath}`);
             });
          }
       });
