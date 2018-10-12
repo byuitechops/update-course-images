@@ -3,6 +3,11 @@ const request = require('request');
 const canvas = require('canvas-api-wrapper');
 const asyncLib = require('async');
 
+// CONSTANTS
+const TESTING = false;
+const HOMEIMAGE = 'homeimage.jpg';
+const TESTINGIMAGE = 'testingimage.jpg';
+
 //Master Courses - 42
 
 /**
@@ -21,15 +26,15 @@ async function uploadFileMaster(courseId, path, bytes) {
    try {
       const parentFolder = 'course_image';
 
-      functions.unshift(asyncLib.constant(await notifyCanvasFile(courseId, path, parentFolder, bytes)));
+      functions.unshift(asyncLib.constant(await notifyCanvasFile(courseId, path, parentFolder, bytes), path));
 
       asyncLib.waterfall(functions, (err) => {
          if (err) {
-            console.error(err);
-            return;
+            return err;
          }
 
-         console.log(`Upload to course ${courseId} was successful!`);
+         if (TESTING) console.log(`Upload to course ${courseId} was successful!`);
+         return null;
       });
    } catch (err) {
       return err;
@@ -67,9 +72,9 @@ async function notifyCanvasFile(courseId, path, parentFolder, bytes) {
  *  - last parameter is file parameter 
  *  - Any other parameters specified in the upload_params response between first and last
  */
-function uploadFileCanvas(resObj, uploadFileCanvasCallback) {
+function uploadFileCanvas(resObj, path, uploadFileCanvasCallback) {
    let formData = resObj.upload_params;
-   formData.file = fs.createReadStream('../homeimage.jpg');
+   formData.file = fs.createReadStream(path);
 
    request.post({
       url: resObj.upload_url,
@@ -79,7 +84,6 @@ function uploadFileCanvas(resObj, uploadFileCanvasCallback) {
          uploadFileCanvasCallback(err);
          return;
       }
-
       uploadFileCanvasCallback(null, resObj.upload_params.success_action_redirect);
    });
 }
@@ -94,7 +98,6 @@ function uploadFileCanvas(resObj, uploadFileCanvasCallback) {
 function checkFileCanvas(redirectUrl, checkFileCanvasCallback) {
    request.get(redirectUrl, (err) => {
       if (err) {
-         console.log(err);
          checkFileCanvasCallback(err);
          return;
       }
@@ -104,10 +107,17 @@ function checkFileCanvas(redirectUrl, checkFileCanvasCallback) {
 }
 
 //start here
-(async () => {
+async function beginUpload() {
    const courseId = 21050;
-   const filename = '../homeimage.jpg';
+   const filename = (TESTING) ? TESTINGIMAGE : HOMEIMAGE;
    const bytes = fs.statSync(filename)['size'];
 
-   await uploadFileMaster(courseId, filename, bytes);
-})();
+   const response = await uploadFileMaster(courseId, filename, bytes);
+   return response;
+};
+
+beginUpload();
+
+module.exports = {
+   beginUpload
+};
