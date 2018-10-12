@@ -4,7 +4,7 @@
   "description": "This will update the image that is on the home page and the course image (the one that gets displayed for the course in Dashboard)",
   "main": "index.js",
   "scripts": {
-    "start": "node cleanImages.js",
+    "start": "node ./cleanImages.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

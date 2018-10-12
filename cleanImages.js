@@ -16,7 +16,7 @@ function removeDuplicateTag(file) {
 }
 
 function retrieveFiles(retrieveFilesCallback) {
-   const path = './images';
+   const path = `./images`;
 
    fs.readdir(path, (err, files) => {
       if (err) {
@@ -26,6 +26,7 @@ function retrieveFiles(retrieveFilesCallback) {
 
       let filesArray = breakFiles(prepFiles(files).map(file => splitName(file)));
 
+      console.log(`Successfully formatted files`);
       retrieveFilesCallback(null, filesArray);
    });
 }
@@ -44,34 +45,61 @@ function splitName(name) {
 }
 
 function createDirectory(filesArray, createDirectoryCallback) {
-   let path = './updatedImages';
+   let newPath = `./updatedImages`;
 
-   fs.mkdir(path, (err) => {
+   fs.mkdir(newPath, (err) => {
       if (err) {
          createDirectoryCallback(err);
          return;
       }
 
-      createListOfDirectories(path, filesArray);
-      moveFiles(path, filesArray, (err) => {
-         if (err) {
-            console.error(err);
-            return;
-         }
-
-         createDirectoryCallback(null);
-      });
+      console.log(`Successfully created a directory to hold all files`);
+      createDirectoryCallback(null, newPath, filesArray);
    });
 }
 
-function createListOfDirectories(path, filesArray) {
-   filesArray.map(file => fs.mkdirSync(`${path}/${file[0]}`));
+function createListOfDirectories(path, filesArray, createListOfDirectoriesCallback) {
+   asyncLib.each(filesArray, (file, eachCallback) => {
+      fs.mkdir(`${path}/${file[0]}`, (err) => {
+         if (err) {
+            eachCallback(err);
+            return;
+         }
+
+         eachCallback(null);
+      });
+   }, (err) => {
+      if (err) {
+         createListOfDirectoriesCallback(err);
+         return;
+      }
+
+      console.log(`Successfully created directories for all courses.`);
+      createListOfDirectoriesCallback(null, path, filesArray);
+   });
 }
 
 function moveFiles(path, filesArray, moveFilesCallback) {
+   let oldPath = './images';
+
    asyncLib.each(filesArray, (files, eachCallback) => {
-      console.log(files);
-      callback(null);
+      let errorThrew = null;
+      Object.keys(files[0]).forEach(key => {
+         if (files[1][key]) {
+            fs.rename(`${oldPath}/${files[1][key].path}`, `${path}/${files[0]}/${files[1][key].path}`, (err) => {
+               if (err) {
+                  errorThrew = err;
+                  return;
+               }
+
+               console.log(`Success: moved ${oldPath}/${files[1][key].path} to ${path}/${files[0]}/${files[1][key].path}`);
+            });
+         }
+      });
+
+      if (errorThrew) eachCallback(errorThrew);
+
+      eachCallback(null);
    }, (eachErr) => {
       if (eachErr) {
          moveFilesCallback(eachErr);
@@ -80,18 +108,6 @@ function moveFiles(path, filesArray, moveFilesCallback) {
 
       moveFilesCallback(null);
    });
-
-   // let oldPath = './images';
-   // filesArray.map(files => Object.keys(files[1]).forEach(key => {
-   //    fs.rename(`${oldPath}/${files[1][key].path}`, `${path}/${files[1][key].path}`, (err) => {
-   //       if (err) {
-   //          console.log(err);
-   //          return;
-   //       }
-
-   //       console.log(`Success: moved ${oldPath}/${files[1][key].path} to ${path}/${files[1][key].path}`);
-   //    })
-   // }));
 }
 
 function breakFiles(files) {
@@ -101,7 +117,9 @@ function breakFiles(files) {
 (() => {
    const functions = [
       retrieveFiles,
-      createDirectory
+      createDirectory,
+      createListOfDirectories,
+      moveFiles
    ];
 
    asyncLib.waterfall(functions, (err, results) => {
