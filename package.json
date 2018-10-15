@@ -4,9 +4,10 @@
   "description": "This will update the image that is on the home page and the course image (the one that gets displayed for the course in Dashboard)",
   "main": "index.js",
   "scripts": {
-    "upload": "node ./uploadCanvas.js",
-    "clean": "node ./cleanImages.js",
-    "test": "mocha tests.js"
+    "upload": "node ./src/uploadCanvas.js",
+    "clean": "node ./src/cleanImages.js",
+    "checker": "node ./src/fileChecker.js",
+    "test": "mocha ./test/tests.js"
   },
   "repository": {
     "type": "git",
@@ -29,6 +30,7 @@
     "mocha": "^5.2.0",
     "path": "^0.12.7",
     "request": "^2.88.0",
-    "underscore": "^1.9.1"
+    "underscore": "^1.9.1",
+    "walk": "^2.3.14"
   }
 }

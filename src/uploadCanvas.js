@@ -5,8 +5,6 @@ const asyncLib = require('async');
 
 // CONSTANTS
 const TESTING = false;
-const HOMEIMAGE = 'homeimage.jpg';
-const TESTINGIMAGE = 'testingimage.jpg';
 
 //Master Courses - 42
 
@@ -34,7 +32,6 @@ async function uploadFileMaster(courseId, path, bytes) {
          }
 
          if (TESTING) console.log(`Upload to course ${courseId} was successful!`);
-         return null;
       });
    } catch (err) {
       return err;
@@ -107,16 +104,24 @@ function checkFileCanvas(redirectUrl, checkFileCanvasCallback) {
 }
 
 //start here
-async function beginUpload() {
-   const courseId = 21050;
-   const filename = (TESTING) ? TESTINGIMAGE : HOMEIMAGE;
-   const bytes = fs.statSync(filename)['size'];
+async function beginUpload(courses) {
+   courses.forEach(course => {
+      let courseId = course.courseId;
+      let filename = course.path;
 
-   const response = await uploadFileMaster(courseId, filename, bytes);
-   return response;
+      const bytes = fs.statSync(filename)['size'];
+      const response = await uploadFileMaster(courseId, filename, bytes);
+
+      if (response) console.error(response);
+   });
 };
 
-beginUpload();
+let courses = [{
+   'courseId': 21050,
+   'path': '../testingimage.jpg'
+}];
+
+beginUpload(courses);
 
 module.exports = {
    beginUpload

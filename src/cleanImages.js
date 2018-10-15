@@ -3,6 +3,16 @@ const fs = require('fs');
 const path = require('path');
 const asyncLib = require('async');
 
+//constants
+const PATH = `../images`;
+const NEWPATH = `../updatedImages`;
+
+/**
+ * prepFiles
+ * @param {Array} files 
+ * 
+ * This function goes through and cleans all paths inside files array to make the cleaning up easier.
+ */
 function prepFiles(files) {
    //strip all (1), (2) or anything of like that and then removes all '.jpg'
    return files.map(ele => ({
@@ -11,14 +21,25 @@ function prepFiles(files) {
    }));
 }
 
+/**
+ * removeDuplicateTag
+ * @param {String} file 
+ * 
+ * This function goes through the string and if there is a (1) or something similar (Windows uses this to rename files
+ * if one already exists with the same name), this function will remove the (1).
+ */
 function removeDuplicateTag(file) {
    return (file.match(/(\(|\))/gmi)) ? file.slice(0, file.indexOf('(')).trim() : file;
 }
 
+/**
+ * retrieveFiles
+ * @param {Callback} retrieveFilesCallback 
+ * 
+ * This function retrieves all of the files and calls the appropriate operations on the array.
+ */
 function retrieveFiles(retrieveFilesCallback) {
-   const path = `./images`;
-
-   fs.readdir(path, (err, files) => {
+   fs.readdir(PATH, (err, files) => {
       if (err) {
          retrieveFilesCallback(err);
          return;
@@ -31,6 +52,13 @@ function retrieveFiles(retrieveFilesCallback) {
    });
 }
 
+/**
+ * splitName
+ * @param {String} name 
+ * 
+ * This function returns an object of course, type and image path to help putting everything into 
+ * a folder easier.
+ */
 function splitName(name) {
    let nameSplit = name.file.toLowerCase().split('_');
    let course = nameSplit[0];
@@ -44,20 +72,32 @@ function splitName(name) {
    };
 }
 
+/**
+ * createDirectory
+ * @param {Array} filesArray 
+ * @param {Callback} createDirectoryCallback 
+ */
 function createDirectory(filesArray, createDirectoryCallback) {
-   let newPath = `./updatedImages`;
-
-   fs.mkdir(newPath, (err) => {
+   fs.mkdir(NEWPATH, (err) => {
       if (err) {
          createDirectoryCallback(err);
          return;
       }
 
       console.log(`Successfully created a directory to hold all files`);
-      createDirectoryCallback(null, newPath, filesArray);
+      createDirectoryCallback(null, NEWPATH, filesArray);
    });
 }
 
+/**
+ * createListOfDirectories
+ * @param {String} path 
+ * @param {Array} filesArray 
+ * @param {Callback} createListOfDirectoriesCallback 
+ * 
+ * This function goes through the array and creates a subdirectory for each course inside updatedImages
+ * folder. 
+ */
 function createListOfDirectories(path, filesArray, createListOfDirectoriesCallback) {
    asyncLib.each(filesArray, (file, eachCallback) => {
       fs.mkdir(`${path}/${file[0]}`, (err) => {
@@ -79,9 +119,16 @@ function createListOfDirectories(path, filesArray, createListOfDirectoriesCallba
    });
 }
 
+/**
+ * moveFiles
+ * @param {String} path 
+ * @param {Array} filesArray 
+ * @param {Callback} moveFilesCallback 
+ * 
+ * This function uses the rename function of fs to "move" the files to their appropriate
+ * class directory.
+ */
 function moveFiles(path, filesArray, moveFilesCallback) {
-   let oldPath = './images';
-
    asyncLib.each(filesArray, (files, eachCallback) => {
       let errorThrew = null;
       Object.keys(files[0]).forEach(key => {
@@ -91,6 +138,8 @@ function moveFiles(path, filesArray, moveFilesCallback) {
             let type = name[1];
             let newPath = '';
 
+            //ensuring that homeimage is always homeImage since there is a bunch
+            //with either name
             if (/(homeimage)+/.test(name[1])) {
                let temp = name[1].split('i');
                type = temp[0] + 'I' + temp[1];
@@ -98,13 +147,14 @@ function moveFiles(path, filesArray, moveFilesCallback) {
 
             newPath = `${course}_${type}`;
 
-            fs.rename(`${oldPath}/${files[1][key].path}`, `${path}/${files[0]}/${newPath}`, (err) => {
+            //move the file
+            fs.rename(`${PATH}/${files[1][key].path}`, `${path}/${files[0]}/${newPath}`, (err) => {
                if (err) {
                   errorThrew = err;
                   return;
                }
 
-               console.log(`Success: moved ${oldPath}/${files[1][key].path} to ${path}/${files[0]}/${newPath}`);
+               console.log(`Success: moved ${PATH}/${files[1][key].path} to ${path}/${files[0]}/${newPath}`);
             });
          }
       });
@@ -122,6 +172,13 @@ function moveFiles(path, filesArray, moveFilesCallback) {
    });
 }
 
+/**
+ * breakFiles
+ * @param {Array} files 
+ * 
+ * This function simply uses underscore to group the files up by course 
+ * to make life easier.
+ */
 function breakFiles(files) {
    return _.pairs(_.groupBy(files, 'course'));
 }
