@@ -7,7 +7,8 @@
     "upload": "node ./src/uploadCanvas.js",
     "clean": "node ./src/cleanImages.js",
     "checker": "node ./src/folderChecker.js",
-    "test": "mocha ./test/tests.js"
+    "test": "mocha ./test/tests.js",
+    "coverage": "nyc mocha"
   },
   "repository": {
     "type": "git",
@@ -31,5 +32,8 @@
     "path": "^0.12.7",
     "request": "^2.88.0",
     "underscore": "^1.9.1"
+  },
+  "devDependencies": {
+    "nyc": "^13.1.0"
   }
 }
