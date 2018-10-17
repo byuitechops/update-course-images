@@ -3,6 +3,7 @@ const request = require('request');
 const canvas = require('canvas-api-wrapper');
 const asyncLib = require('async');
 
+const MANUAL_TESTING = false;
 //Master Courses - 42
 
 /**
@@ -111,12 +112,15 @@ async function beginUpload(courses) {
    }
 };
 
-let courses = [{
-   'id': 21050,
-   'path': 'testingimage.jpg'
-}];
+if (MANUAL_TESTING) {
+   let courses = [{
+      'id': 21050,
+      'path': 'testingimage.jpg'
+   }];
 
-beginUpload(courses);
+   beginUpload(courses);
+}
+
 
 module.exports = {
    beginUpload
