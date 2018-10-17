@@ -1,7 +1,7 @@
 # update-course-images
 
 ## Purpose
-UUpdate the image that is on the home page and the course image (the one that gets displayed for the course in Dashboard)
+Update the image that is on the home page and the course image (the one that gets displayed for the course in Dashboard)
 
 ## Installation
 
