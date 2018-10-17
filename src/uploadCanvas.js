@@ -105,20 +105,20 @@ function checkFileCanvas(redirectUrl, checkFileCanvasCallback) {
 
 //start here
 async function beginUpload(courses) {
-   courses.forEach(course => {
-      let courseId = course.courseId;
+   for (let course of courses) {
+      let courseId = course.id;
       let filename = course.path;
 
       const bytes = fs.statSync(filename)['size'];
       const response = await uploadFileMaster(courseId, filename, bytes);
 
       if (response) console.error(response);
-   });
+   }
 };
 
 let courses = [{
-   'courseId': 21050,
-   'path': '../testingimage.jpg'
+   'id': 21050,
+   'path': 'testingimage.jpg'
 }];
 
 beginUpload(courses);

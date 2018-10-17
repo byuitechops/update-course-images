@@ -6,7 +6,7 @@
   "scripts": {
     "upload": "node ./src/uploadCanvas.js",
     "clean": "node ./src/cleanImages.js",
-    "checker": "node ./src/fileChecker.js",
+    "checker": "node ./src/folderChecker.js",
     "test": "mocha ./test/tests.js"
   },
   "repository": {
@@ -30,7 +30,6 @@
     "mocha": "^5.2.0",
     "path": "^0.12.7",
     "request": "^2.88.0",
-    "underscore": "^1.9.1",
-    "walk": "^2.3.14"
+    "underscore": "^1.9.1"
   }
 }

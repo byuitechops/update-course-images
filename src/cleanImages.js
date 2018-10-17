@@ -4,8 +4,8 @@ const path = require('path');
 const asyncLib = require('async');
 
 //constants
-const PATH = `../images`;
-const NEWPATH = `../updatedImages`;
+const PATH = `./images`;
+const NEWPATH = `./updatedImages`;
 
 /**
  * prepFiles

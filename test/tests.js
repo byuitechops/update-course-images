@@ -19,10 +19,9 @@ describe('cleanImages.js', function () {
 	});
 
 	describe('updatedImages folder', function () {
-		it('should have 1,336 files in /updatedImages folder', function (done) {
+		it('should have 1,337 files in /updatedImages folder', function (done) {
 			fs.readdir('../updatedImages', function (err, files) {
-				//FIX THIS!!!!!!!!!!!!!!!!!!!!!!!!!!
-				expect(files).to.have.lengthOf(1340);
+				expect(files).to.have.lengthOf(1336);
 				done();
 			});
 		});
@@ -37,7 +36,25 @@ describe('uploadCanvas.js', function () {
 
 		it('should upload the file directly to Canvas course - must have CANVAS_API_TOKEN set', function () {
 			return new Promise((resolve) => {
-				uploadCanvas.beginUpload()
+				let courses = [{
+						'id': 21050,
+						'path': 'testingimage.jpg'
+					},
+					{
+						'id': 26934,
+						'path': 'testingimage.jpg'
+					},
+					{
+						'id': 26972,
+						'path': 'testingimage.jpg'
+					},
+					{
+						'id': 26974,
+						'path': 'testingimage.jpg'
+					}
+				];
+
+				uploadCanvas.beginUpload(courses)
 					.then(results => {
 						assert.ok(results)
 						resolve();
@@ -56,6 +73,8 @@ describe('uploadCanvas.js', function () {
 						// expect(results).to.be.an('array').that.does.not.contain.something.like({
 						//    filename: badFilename
 						// });
+
+						resolve();
 					});
 			});
 		}).timeout(20000);
