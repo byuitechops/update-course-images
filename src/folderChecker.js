@@ -3,20 +3,25 @@ const fs = require('fs-extra');
 const path = require('path');
 
 /**
- * groupFolders
- * @param {Array} - array of objects to group by 
+ * getNewPath
+ * @param {String} filename 
  * 
+ * This function returns the updated path name for the folder
  */
-function groupFolders(arr) {
-   return _.groupBy(arr, 'parent');
-}
-
 function getNewPath(filename) {
    let base = path.basename(filename);
 
    return `${__dirname}/${filename.replace(base, '')}/../updatedImages/${base}`;
 }
 
+/**
+ * diveInFolders
+ * @param {Array} files 
+ * 
+ * This function goes through and analyzes the specific folder and if it doesn't
+ * have two files inside the folder, it'll push the course name to the 
+ * discrepanciesArray that will be returned.
+ */
 async function diveInFolders(files) {
    let discrepanciesArray = [];
 
@@ -36,11 +41,10 @@ async function diveInFolders(files) {
    return discrepanciesArray;
 }
 
-/**
- * This function simply "walks" through each directory inside
- * updatedImages folder and lists all of the folders that are not
- * meeting the rules. This is to ensure that each folder is done 
- * correctly and that we are catching all discrepancies. 
+/** 
+ * This function goes through updatedImages and retrieves the array of folders to pass into 
+ * diveFolders to analyze the folders to ensure that only two files exist in each folder - 
+ * dashboard and home images.
  */
 (async () => {
    const filepath = './updatedImages';
