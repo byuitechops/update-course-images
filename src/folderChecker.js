@@ -5,13 +5,14 @@ const path = require('path');
 /**
  * getNewPath
  * @param {String} filename 
+ * @param {String} filePath
  * 
  * This function returns the updated path name for the folder
  */
-function getNewPath(filename) {
+function getNewPath(filename, filePath) {
    let base = path.basename(filename);
 
-   return `${__dirname}/${filename.replace(base, '')}/../updatedImages/${base}`;
+   return `${__dirname}/${filename.replace(base, '')}/../${filePath}/${base}`;
 }
 
 /**
@@ -22,12 +23,12 @@ function getNewPath(filename) {
  * have two files inside the folder, it'll push the course name to the 
  * discrepanciesArray that will be returned.
  */
-async function diveInFolders(files) {
+async function diveInFolders(files, filePath) {
    let discrepanciesArray = [];
 
    for (const file of files) {
       try {
-         let results = await fs.readdir(getNewPath(file));
+         let results = await fs.readdir(getNewPath(file, filePath));
 
          if (results.length !== 2) discrepanciesArray.push(file);
       } catch (ex) {
@@ -46,22 +47,24 @@ async function diveInFolders(files) {
  * diveFolders to analyze the folders to ensure that only two files exist in each folder - 
  * dashboard and home images.
  */
-(async () => {
-   const filepath = './updatedImages';
-
+async function initiateChecker(testBadFolder = false) {
    try {
-      let results = await fs.readdir(filepath);
-      let discrepanciesArray = await diveInFolders(results);
+      let filePath = (!testBadFolder) ? './updatedImages' : './updatedImages-test';
+      let results = await fs.readdir(filePath);
+      let discrepanciesArray = await diveInFolders(results, filePath);
 
-      if (discrepanciesArray.length) {
-         console.log('Discrepancies found: ', discrepanciesArray);
-      } else {
-         console.log('No discrepancies found...');
-      }
+      return discrepanciesArray;
    } catch (ex) {
       if (ex) {
          console.log(ex);
          return;
       }
    }
-})();
+};
+
+initiateChecker();
+
+module.exports = {
+   initiateChecker,
+   diveInFolders
+}

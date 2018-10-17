@@ -3,9 +3,6 @@ const request = require('request');
 const canvas = require('canvas-api-wrapper');
 const asyncLib = require('async');
 
-// CONSTANTS
-const TESTING = false;
-
 //Master Courses - 42
 
 /**
@@ -22,7 +19,7 @@ async function uploadFileMaster(courseId, path, bytes) {
    ];
 
    try {
-      const parentFolder = 'course_image';
+      let parentFolder = 'course_image';
 
       functions.unshift(asyncLib.constant(await notifyCanvasFile(courseId, path, parentFolder, bytes), path));
 
@@ -30,8 +27,6 @@ async function uploadFileMaster(courseId, path, bytes) {
          if (err) {
             return err;
          }
-
-         if (TESTING) console.log(`Upload to course ${courseId} was successful!`);
       });
    } catch (err) {
       return err;

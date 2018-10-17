@@ -3,4 +3,5 @@
 /images
 /images-backup
 /updatedImages
+/.nyc_output
 *.jpg
