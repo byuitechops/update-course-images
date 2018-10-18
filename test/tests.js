@@ -1,6 +1,5 @@
 const fs = require('fs');
 const chai = require('chai');
-const assert = require('chai').assert;
 const expect = require('chai').expect;
 const canvas = require('canvas-api-wrapper');
 const uploadCanvas = require('../src/uploadCanvas');
@@ -8,6 +7,24 @@ const folderChecker = require('../src/folderChecker');
 
 chai.use(require('chai-like'));
 chai.use(require('chai-things'));
+
+const COURSES = [{
+		'id': 21050,
+		'path': 'testingimage.jpg'
+	},
+	{
+		'id': 26934,
+		'path': 'testingimage.jpg'
+	},
+	{
+		'id': 26972,
+		'path': 'testingimage.jpg'
+	},
+	{
+		'id': 26974,
+		'path': 'testingimage.jpg'
+	}
+];
 
 describe('update-course-images', function () {
 	describe('cleanImages.js', function (done) {
@@ -34,38 +51,19 @@ describe('update-course-images', function () {
 		describe('uploading', function () {
 			const goodFilename = 'testingimage.jpg';
 			const badFilename = 'badtestingimage.jpg';
-			const courseId = 21050;
 
 			it('should upload the file directly to Canvas course - must have CANVAS_API_TOKEN set', function () {
 				return new Promise((resolve) => {
-					let courses = [{
-							'id': 21050,
-							'path': 'testingimage.jpg'
-						},
-						{
-							'id': 26934,
-							'path': 'testingimage.jpg'
-						},
-						{
-							'id': 26972,
-							'path': 'testingimage.jpg'
-						},
-						{
-							'id': 26974,
-							'path': 'testingimage.jpg'
-						}
-					];
-
-					uploadCanvas.beginUpload(courses)
+					uploadCanvas.beginUpload(COURSES)
 						.then(results => {
 							resolve();
 						});
 				});
 			}).timeout(20000);
 
-			it('should find the updated file in response array when server makes GET files call to the course', function () {
+			it(`should find the updated file in response array in course: ${COURSES[0].id}`, function () {
 				return new Promise((resolve) => {
-					canvas.get(`/api/v1/courses/${courseId}/files`)
+					canvas.get(`/api/v1/courses/${COURSES[0].id}/files`)
 						.then(results => {
 							expect(results).to.be.an('array').that.contains.something.like({
 								filename: goodFilename
@@ -75,12 +73,36 @@ describe('update-course-images', function () {
 				});
 			}).timeout(20000);
 
-			it('should not find the non-uploaded file in the response array when server makes GET files call to the course', function () {
+			it(`should find the updated file in response array in course: ${COURSES[1].id}`, function () {
 				return new Promise((resolve) => {
-					canvas.get(`/api/v1/courses/${courseId}/files`)
+					canvas.get(`/api/v1/courses/${COURSES[1].id}/files`)
 						.then(results => {
-							expect(results).to.be.an('array').that.does.not.contain.something.like({
-								filename: badFilename
+							expect(results).to.be.an('array').that.contains.something.like({
+								filename: goodFilename
+							});
+							resolve();
+						});
+				});
+			}).timeout(20000);
+
+			it(`should find the updated file in response array in course: ${COURSES[2].id}`, function () {
+				return new Promise((resolve) => {
+					canvas.get(`/api/v1/courses/${COURSES[2].id}/files`)
+						.then(results => {
+							expect(results).to.be.an('array').that.contains.something.like({
+								filename: goodFilename
+							});
+							resolve();
+						});
+				});
+			}).timeout(20000);
+
+			it(`should find the updated file in response array in course: ${COURSES[3].id}`, function () {
+				return new Promise((resolve) => {
+					canvas.get(`/api/v1/courses/${COURSES[3].id}/files`)
+						.then(results => {
+							expect(results).to.be.an('array').that.contains.something.like({
+								filename: goodFilename
 							});
 							resolve();
 						});
@@ -100,7 +122,7 @@ describe('update-course-images', function () {
 			});
 		}).timeout(20000);
 
-		it('should have 16 entries in discrepancies array', function () {
+		it('should have 16 entries in discrepancies array upon making updatedImages with less than two files in a folder', function () {
 			//A special updatedImages folder exist to test if it actually
 			//returns an array of all "invalid" course folders
 			return new Promise(resolve => {
