@@ -1,7 +1,7 @@
-/************ NOT USED ***********************/
-
 const fs = require('fs');
 const canvas = require('canvas-api-wrapper');
+
+const TESTING = false;
 
 async function retrieveListOfFiles(courseId) {
    try {
@@ -31,8 +31,16 @@ async function updateCourseImage(courseId, imageId) {
    }
 }
 
-(async () => {
-   let courseId = 26932;
+async function uploader(courses) {
+
+}
+
+module.exports = {
+   uploader
+};
+
+if (TESTING) {
+   let courseId = 21050;
    let name = 'dashboard.jpg';
 
    const imageId = filterFiles(await retrieveListOfFiles(courseId), name);
@@ -40,4 +48,4 @@ async function updateCourseImage(courseId, imageId) {
    console.log(imageId);
 
    // await updateCourseImage(courseId, imageId);
-})();
+}

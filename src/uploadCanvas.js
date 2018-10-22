@@ -1,9 +1,9 @@
 const fs = require('fs');
-const request = require('request');
 const canvas = require('canvas-api-wrapper');
+const request = require('request');
 const asyncLib = require('async');
 
-const MANUAL_TESTING = false;
+const TESTING = true;
 //Master Courses - 42
 
 /**
@@ -20,7 +20,7 @@ async function uploadFileMaster(courseId, path, bytes) {
    ];
 
    try {
-      let parentFolder = 'course_image';
+      let parentFolder = 'template';
 
       functions.unshift(asyncLib.constant(await notifyCanvasFile(courseId, path, parentFolder, bytes), path));
 
@@ -99,28 +99,23 @@ function checkFileCanvas(redirectUrl, checkFileCanvasCallback) {
    });
 }
 
-//start here
 async function beginUpload(courses) {
    for (let course of courses) {
       let courseId = course.id;
-      let filename = course.path;
 
-      const bytes = fs.statSync(filename)['size'];
-      const response = await uploadFileMaster(courseId, filename, bytes);
-
-      if (response) console.error(response);
+      await Promise.all(course.path.map(async image => {
+         const bytes = fs.statSync(image)['size'];
+         await uploadFileMaster(courseId, image, bytes);
+      }));
    }
 };
 
-if (MANUAL_TESTING) {
-   let courses = [{
-      'id': 21050,
-      'path': 'testingimage.jpg'
-   }];
-
-   beginUpload(courses);
+async function testing() {
+   let courses = await import('./coursesContent');
+   const beginUploadResponse = await beginUpload(courses);
 }
 
+if (TESTING) testing();
 
 module.exports = {
    beginUpload

@@ -1,40 +1,42 @@
 {
-  "name": "update-course-images",
-  "version": "1.0.0",
-  "description": "This will update the image that is on the home page and the course image (the one that gets displayed for the course in Dashboard)",
-  "main": "index.js",
-  "scripts": {
-    "upload": "node ./src/uploadCanvas.js",
-    "clean": "node ./src/cleanImages.js",
-    "checker": "node ./src/folderChecker.js",
-    "test": "mocha ./test/tests.js",
-    "coverage": "nyc mocha"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/byuitechops/update-course-images.git"
-  },
-  "author": "Sam McGrath",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/byuitechops/update-course-images/issues"
-  },
-  "homepage": "https://github.com/byuitechops/update-course-images#readme",
-  "dependencies": {
-    "async": "^2.6.1",
-    "bluebird": "^3.5.2",
-    "canvas-api-wrapper": "^3.3.4",
-    "chai": "^4.2.0",
-    "chai-like": "^1.1.1",
-    "chai-things": "^0.2.0",
-    "fs": "0.0.1-security",
-    "fs-extra": "^7.0.0",
-    "mocha": "^5.2.0",
-    "path": "^0.12.7",
-    "request": "^2.88.0",
-    "underscore": "^1.9.1"
-  },
-  "devDependencies": {
-    "nyc": "^13.1.0"
-  }
+   "name": "update-course-images",
+   "version": "1.0.0",
+   "description": "This will update the image that is on the home page and the course image (the one that gets displayed for the course in Dashboard)",
+   "main": "index.js",
+   "scripts": {
+      "upload": "node ./src/uploadCanvas.js",
+      "clean": "node ./src/cleanImages.js",
+      "checker": "node ./src/folderChecker.js",
+      "object": "node ./src/createObjects.js",
+      "test": "mocha ./test/tests.js",
+      "coverage": "nyc mocha"
+   },
+   "repository": {
+      "type": "git",
+      "url": "git+https://github.com/byuitechops/update-course-images.git"
+   },
+   "author": "Sam McGrath",
+   "license": "MIT",
+   "bugs": {
+      "url": "https://github.com/byuitechops/update-course-images/issues"
+   },
+   "homepage": "https://github.com/byuitechops/update-course-images#readme",
+   "dependencies": {
+      "async": "^2.6.1",
+      "bluebird": "^3.5.2",
+      "canvas-api-wrapper": "^3.3.4",
+      "chai": "^4.2.0",
+      "chai-like": "^1.1.1",
+      "chai-things": "^0.2.0",
+      "fs": "0.0.1-security",
+      "fs-extra": "^7.0.0",
+      "mocha": "^5.2.0",
+      "npm": "^6.4.1",
+      "path": "^0.12.7",
+      "request": "^2.88.0",
+      "underscore": "^1.9.1"
+   },
+   "devDependencies": {
+      "nyc": "^13.1.0"
+   }
 }

@@ -5,3 +5,4 @@
 /updatedImages
 /.nyc_output
 *.jpg
+/src/coursesContent.js
