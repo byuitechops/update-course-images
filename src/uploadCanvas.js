@@ -1,10 +1,83 @@
-const fs = require('fs');
+const fs = require('fs-extra');
 const canvas = require('canvas-api-wrapper');
 const request = require('request');
 const asyncLib = require('async');
 
 const TESTING = true;
 //Master Courses - 42
+
+/**
+ * getAllCourses 
+ * 
+ * This function gets the courses from Canvas
+ */
+async function getAllCourses() {
+   let accountId = 112;
+
+   let courses = await canvas.get(`/api/v1/accounts/${accountId}/courses`, {
+      sort: 'course_name',
+      'include[]': 'subaccount'
+   });
+
+   // ensure that courses are exactly what we need since Canvas is a little
+   // sketchy when it comes to ${userId}/courses
+   return courses.filter(course => course.account_id === parseInt(accountId, '10'));
+}
+
+function fixClassString(str) {
+   return str.split(' ').splice(0, 2).join(' ').replace(/\s/g, '').toLowerCase()
+}
+
+function getFileName(str) {
+   return str.split('/').splice(-1);
+}
+
+/**
+ * createObjects
+ * 
+ * This function gets the list of courses and passes it into createCourseArray. It'll
+ * get the object array and simply return it.
+ */
+async function createObjects(courses) {
+   const filepath = './updatedImages';
+
+   let tempCourses = courses.map(course => fixClassString(course.course_code));
+   let files = await fs.readdir(filepath);
+   let newFiles = files.filter(file => tempCourses.includes(file));
+   return await createCourseArray(newFiles, courses);
+}
+
+/**
+ * createCourseArray
+ * @param {Array of Course objects} courses 
+ * 
+ * This function reads through and creates the object array to prep the system
+ * to upload files to Canvas in mass. 
+ * 
+ * Course Array should be like this after it finishes: 
+ * [
+ *    {
+ *       'id': courseId,
+ *       'path': ['dashboard.jpg', 'homeimage.jpg']
+ *    },
+ *    ...
+ * ]
+ */
+async function createCourseArray(folders, courses) {
+   const path = './updatedImages';
+
+   return await Promise.all(courses.map(async (course, index) => {
+      let newPath = fixClassString(folders[index]);
+      let files = await fs.readdir(`${path}/${newPath}`);
+      files = files.map(file => `${path}/${newPath}/${file}`);
+
+      return {
+         'courseName': newPath,
+         'id': course.id,
+         'path': files
+      }
+   }));
+};
 
 /**
  * uploadFileMaster
@@ -43,7 +116,7 @@ async function uploadFileMaster(courseId, path, bytes) {
  */
 async function notifyCanvasFile(courseId, path, parentFolder, bytes) {
    const resObj = await canvas.post(`/api/v1/courses/${courseId}/files`, {
-      'name': path,
+      'name': getFileName(path),
       'size': bytes,
       'content-type': 'image/jpeg',
       'parent_folder_path': parentFolder
@@ -111,8 +184,8 @@ async function beginUpload(courses) {
 };
 
 async function testing() {
-   let courses = await import('./coursesContent');
-   const beginUploadResponse = await beginUpload(courses);
+   let courses = await getAllCourses();
+   const beginUploadResponse = await beginUpload(await createObjects(courses));
 }
 
 if (TESTING) testing();

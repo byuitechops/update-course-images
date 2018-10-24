@@ -7,7 +7,6 @@
       "upload": "node ./src/uploadCanvas.js",
       "clean": "node ./src/cleanImages.js",
       "checker": "node ./src/folderChecker.js",
-      "object": "node ./src/createObjects.js",
       "test": "mocha ./test/tests.js",
       "coverage": "nyc mocha"
    },

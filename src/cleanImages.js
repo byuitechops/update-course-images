@@ -134,6 +134,7 @@ function moveFiles(path, filesArray, moveFilesCallback) {
       Object.keys(files[0]).forEach(key => {
          if (files[1][key]) {
             let name = files[1][key].path.toLowerCase().split('_');
+            let course = name[0];
             let type = name[1];
 
             //ensuring that homeimage is always homeImage since there is a bunch
@@ -147,13 +148,13 @@ function moveFiles(path, filesArray, moveFilesCallback) {
             type = type.replace(/[\s*(\d)]+/g, '')
 
             //move the file
-            fs.rename(`${PATH}/${files[1][key].path}`, `${path}/${files[0]}/${type}`, (err) => {
+            fs.rename(`${PATH}/${files[1][key].path}`, `${path}/${files[0]}/${course + type}`, (err) => {
                if (err) {
                   errorThrew = err;
                   return;
                }
 
-               console.log(`Success: moved ${PATH}/${files[1][key].path} to ${path}/${files[0]}/${type}`);
+               console.log(`Success: moved ${PATH}/${files[1][key].path} to ${path}/${files[0]}/${course + type}`);
             });
          }
       });
