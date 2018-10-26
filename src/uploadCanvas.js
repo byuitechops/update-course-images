@@ -41,7 +41,7 @@ function fixClassString(str) {
  * This function returns the name of the file and ignores the rest of the filepath
  */
 function getFilename(str) {
-   return str.split('/').splice(-1);
+   return str.split('/').splice(-1).join('');
 }
 
 /**
@@ -52,7 +52,10 @@ function getFilename(str) {
  */
 async function retrieveListOfFiles(courseId) {
    try {
-      const files = await canvas.get(`/api/v1/courses/${courseId}/files`);
+      let files = [
+         ...await canvas.get(`/api/v1/courses/${courseId}/files?search_term=dashboard`),
+         ...await canvas.get(`/api/v1/courses/${courseId}/files?search_term=homeImage`)
+      ];
 
       return files;
    } catch (err) {
@@ -69,7 +72,7 @@ async function retrieveListOfFiles(courseId) {
  * This function gets the file property for the dashboard image in the course files.
  */
 function filterFiles(files, name) {
-   return files.filter(file => file.display_name === name)[0];
+   return files.filter(file => file.filename === name)[0];
 }
 
 /**
@@ -81,15 +84,17 @@ function filterFiles(files, name) {
  */
 async function updateCourseImage(courseId, imageId) {
    try {
-      const response = await canvas.put(`/api/v1/courses/${courseId}`, {
+      const addImageResponse = await canvas.put(`/api/v1/courses/${courseId}`, {
          course: {
-            image_id: imageId
+            'image_id': imageId
          }
       });
+
    } catch (err) {
       console.log(err);
       return;
    }
+
 }
 
 /**
@@ -149,19 +154,14 @@ async function createCourseArray(folders, courses) {
 async function uploadFileMaster(courseId, path, bytes) {
    const functions = [
       uploadFileCanvas,
-      checkFileCanvas
+      // checkFileCanvas -- Canvas updated file upload - https://canvas.instructure.com/doc/api/file.breaking.html
    ];
 
    try {
-      let parentFolder = 'template';
+      const parentFolder = 'template';
 
-      functions.unshift(asyncLib.constant(await notifyCanvasFile(courseId, path, parentFolder, bytes), path));
-
-      asyncLib.waterfall(functions, (err) => {
-         if (err) {
-            return err;
-         }
-      });
+      const notifyCanvasFileResponse = await notifyCanvasFile(courseId, path, parentFolder, bytes);
+      const uploadFileCanvasResponse = await uploadFileCanvas(notifyCanvasFileResponse, path);
    } catch (err) {
       return err;
    }
@@ -198,19 +198,19 @@ async function notifyCanvasFile(courseId, path, parentFolder, bytes) {
  *  - last parameter is file parameter 
  *  - Any other parameters specified in the upload_params response between first and last
  */
-function uploadFileCanvas(resObj, path, uploadFileCanvasCallback) {
+function uploadFileCanvas(resObj, path) {
+   let url = resObj.upload_url;
    let formData = resObj.upload_params;
    formData.file = fs.createReadStream(path);
 
    request.post({
-      url: resObj.upload_url,
+      url: url,
       formData: formData
    }, (err) => {
       if (err) {
-         uploadFileCanvasCallback(err);
+         console.log(err);
          return;
       }
-      uploadFileCanvasCallback(null, resObj.upload_params.success_action_redirect);
    });
 }
 
@@ -220,6 +220,7 @@ function uploadFileCanvas(resObj, path, uploadFileCanvasCallback) {
  * 
  * This function simply makes a GET request to the redirectURL
  * to "complete" the upload process
+ * -- Used for 3xx redirects
  */
 function checkFileCanvas(redirectUrl, checkFileCanvasCallback) {
    request.get(redirectUrl, (err) => {
@@ -236,21 +237,22 @@ async function beginUpload(courses) {
    for (let course of courses) {
       let courseId = course.id;
 
-      await Promise.all(course.path.map(async image => {
+      for (let image of course.path) {
          const bytes = fs.statSync(image)['size'];
 
-         //replace banner
          await uploadFileMaster(courseId, image, bytes);
+      }
 
+      for (let image of course.path) {
          //replace dashboard
-         if (getFilename(image)[0] === 'dashboard.jpg') {
-            const imageId = filterFiles(await retrieveListOfFiles(courseId), image).id;
-            const updateCourseImageResponse = await updateCourseImage(courseId, imageId);
+         if (getFilename(image) === 'dashboard.jpg') {
+            const img = filterFiles(await retrieveListOfFiles(courseId), getFilename(image));
+            const updateCourseImageResponse = await updateCourseImage(courseId, img.id);
             console.log(`Updated dashboard image for ${course.courseName}`);
          } else {
             console.log(`Updated banner image for ${course.courseName}`);
          }
-      }));
+      }
    }
 };
 

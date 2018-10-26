@@ -8,21 +8,34 @@ const folderChecker = require('../src/folderChecker');
 chai.use(require('chai-like'));
 chai.use(require('chai-things'));
 
+const paths = ['dashboard.jpg', 'homeimage.jpg'];
 const COURSES = [{
-      'id': 21050,
-      'path': 'homeimage.jpg'
+      'id': 26932,
+      'path': paths
    },
    {
       'id': 26934,
-      'path': 'homeimage.jpg'
+      'path': paths
    },
    {
       'id': 26972,
-      'path': 'homeimage.jpg'
+      'path': paths
    },
    {
       'id': 26974,
-      'path': 'homeimage.jpg'
+      'path': paths
+   },
+   {
+      'id': 26976,
+      'path': paths
+   },
+   {
+      'id': 26978,
+      'path': paths
+   },
+   {
+      'id': 26980,
+      'path': paths
    }
 ];
 
@@ -38,9 +51,9 @@ describe('update-course-images', function () {
       });
 
       describe('updatedImages folder', function () {
-         it('should have 1,337 files in /updatedImages folder', function (done) {
+         it('should have 1,334 (real courses) + 7 (test courses) files in /updatedImages folder', function (done) {
             fs.readdir('./updatedImages', function (err, files) {
-               expect(files).to.have.lengthOf(1334);
+               expect(files).to.have.lengthOf(1341);
                done();
             });
          });
@@ -53,61 +66,26 @@ describe('update-course-images', function () {
          const badFilename = 'badtestingimage.jpg';
 
          it('should upload the file directly to Canvas course - must have CANVAS_API_TOKEN set', function () {
-            return new Promise((resolve) => {
-               uploadCanvas.beginUpload(COURSES)
-                  .then(results => {
-                     resolve();
-                  });
+            return new Promise(async resolve => {
+               const response = await uploadCanvas.beginUpload(COURSES);
+
+               if (response) resolve();
             });
          }).timeout(20000);
 
-         it(`should find the updated file in response array in course: ${COURSES[0].id}`, function () {
-            return new Promise((resolve) => {
-               canvas.get(`/api/v1/courses/${COURSES[0].id}/files`)
-                  .then(results => {
-                     expect(results).to.be.an('array').that.contains.something.like({
-                        filename: goodFilename
+         Promise.all(COURSES.map(async course => {
+            it(`should find the updated file in response array in course: ${course.id}`, function () {
+               return new Promise((resolve) => {
+                  canvas.get(`/api/v1/courses/${course.id}/files`)
+                     .then(results => {
+                        expect(results).to.be.an('array').that.contains.something.like({
+                           filename: goodFilename
+                        });
+                        resolve();
                      });
-                     resolve();
-                  });
-            });
-         }).timeout(20000);
-
-         it(`should find the updated file in response array in course: ${COURSES[1].id}`, function () {
-            return new Promise((resolve) => {
-               canvas.get(`/api/v1/courses/${COURSES[1].id}/files`)
-                  .then(results => {
-                     expect(results).to.be.an('array').that.contains.something.like({
-                        filename: goodFilename
-                     });
-                     resolve();
-                  });
-            });
-         }).timeout(20000);
-
-         it(`should find the updated file in response array in course: ${COURSES[2].id}`, function () {
-            return new Promise((resolve) => {
-               canvas.get(`/api/v1/courses/${COURSES[2].id}/files`)
-                  .then(results => {
-                     expect(results).to.be.an('array').that.contains.something.like({
-                        filename: goodFilename
-                     });
-                     resolve();
-                  });
-            });
-         }).timeout(20000);
-
-         it(`should find the updated file in response array in course: ${COURSES[3].id}`, function () {
-            return new Promise((resolve) => {
-               canvas.get(`/api/v1/courses/${COURSES[3].id}/files`)
-                  .then(results => {
-                     expect(results).to.be.an('array').that.contains.something.like({
-                        filename: goodFilename
-                     });
-                     resolve();
-                  });
-            });
-         }).timeout(20000);
+               });
+            }).timeout(20000);
+         }));
       });
    });
 

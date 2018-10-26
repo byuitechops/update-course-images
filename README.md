@@ -4,7 +4,7 @@
 Update the image that is on the home page and the course image (the one that gets displayed for the course in Dashboard).
 
 The entire process is purely automated. This will only require the images folder that consists of only images inside of the folder
-titled `coursename_dashboard.imgextension` or `coursename_homeImage.imgextension` with coursename being a course name like FDREL 324, etc. This
+titled `coursename_dashboard.imgextension` or `coursename_homeImage.imgextension` with `coursename` being a course name like FDREL 324, etc. This
 also requires an array of course objects from the Canvas API, just like: 
 ```sh
 [
