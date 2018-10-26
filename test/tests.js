@@ -40,7 +40,7 @@ const COURSES = [{
 ];
 
 describe('update-course-images', function () {
-   describe('cleanImages.js', function (done) {
+   describe('cleanImages.js test cases', function (done) {
       describe('image folder', function () {
          it('should have no images at all in /images folder', function (done) {
             fs.readdir('./images', function (err, files) {
@@ -60,36 +60,36 @@ describe('update-course-images', function () {
       });
    });
 
-   describe('uploadCanvas.js', function () {
-      describe('uploading', function () {
-         const goodFilename = 'homeimage.jpg';
-         const badFilename = 'badtestingimage.jpg';
+   describe('uploadCanvas.js test cases', function () {
+      // describe('uploading', function () {
+      //    const goodFilename = 'homeimage.jpg';
+      //    const badFilename = 'badtestingimage.jpg';
 
-         it('should upload the file directly to Canvas course - must have CANVAS_API_TOKEN set', function () {
-            return new Promise(async resolve => {
-               const response = await uploadCanvas.beginUpload(COURSES);
+      //    it('should upload the file directly to Canvas course - must have CANVAS_API_TOKEN set', function () {
+      //       return new Promise(async resolve => {
+      //          const response = await uploadCanvas.beginUpload(COURSES);
 
-               if (response) resolve();
-            });
-         }).timeout(20000);
+      //          if (response) resolve();
+      //       });
+      //    }).timeout(20000);
 
-         Promise.all(COURSES.map(async course => {
-            it(`should find the updated file in response array in course: ${course.id}`, function () {
-               return new Promise((resolve) => {
-                  canvas.get(`/api/v1/courses/${course.id}/files`)
-                     .then(results => {
-                        expect(results).to.be.an('array').that.contains.something.like({
-                           filename: goodFilename
-                        });
-                        resolve();
-                     });
-               });
-            }).timeout(20000);
-         }));
-      });
+      //    Promise.all(COURSES.map(async course => {
+      //       it(`should find the updated file in response array in course: ${course.id}`, function () {
+      //          return new Promise((resolve) => {
+      //             canvas.get(`/api/v1/courses/${course.id}/files`)
+      //                .then(results => {
+      //                   expect(results).to.be.an('array').that.contains.something.like({
+      //                      filename: goodFilename
+      //                   });
+      //                   resolve();
+      //                });
+      //          });
+      //       }).timeout(20000);
+      //    }));
+      // });
    });
 
-   describe('folderChecker.js', function () {
+   describe('folderChecker.js test cases', function () {
       it('should be empty', function () {
          return new Promise(resolve => {
             folderChecker.initiateChecker()

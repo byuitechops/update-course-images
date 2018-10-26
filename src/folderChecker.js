@@ -43,6 +43,9 @@ async function diveInFolders(files, filePath) {
 }
 
 /** 
+ * initiateChecker()
+ * @param {Boolean} testBadFolder OPTIONAL
+ * 
  * This function goes through updatedImages and retrieves the array of folders to pass into 
  * diveFolders to analyze the folders to ensure that only two files exist in each folder - 
  * dashboard and home images.

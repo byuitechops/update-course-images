@@ -6,23 +6,7 @@ const asyncLib = require('async');
 const TESTING = true;
 //Master Courses - 42
 
-/**
- * getAllCourses 
- * 
- * This function gets the courses from Canvas
- */
-async function getAllCourses() {
-   let accountId = 112;
-
-   let courses = await canvas.get(`/api/v1/accounts/${accountId}/courses`, {
-      sort: 'course_name',
-      'include[]': 'subaccount'
-   });
-
-   // ensure that courses are exactly what we need since Canvas is a little
-   // sketchy when it comes to ${userId}/courses
-   return courses.filter(course => course.account_id === parseInt(accountId, '10'));
-}
+// -------------------------------- HELPER FUNCTIONS ---------------------------
 
 /**
  * fixClassString
@@ -76,28 +60,6 @@ function filterFiles(files, name) {
 }
 
 /**
- * updateCourseImage
- * @param {Int} courseId 
- * @param {Int} imageId 
- * 
- * This function makes the dashboard image the updated dashboard image for the course.
- */
-async function updateCourseImage(courseId, imageId) {
-   try {
-      const addImageResponse = await canvas.put(`/api/v1/courses/${courseId}`, {
-         course: {
-            'image_id': imageId
-         }
-      });
-
-   } catch (err) {
-      console.log(err);
-      return;
-   }
-
-}
-
-/**
  * createObjects
  * 
  * This function gets the list of courses and passes it into createCourseArray. It'll
@@ -144,6 +106,30 @@ async function createCourseArray(folders, courses) {
    }));
 };
 
+// ------------------------------------- UPLOAD ------------------------------
+
+/**
+ * updateCourseImage
+ * @param {Int} courseId 
+ * @param {Int} imageId 
+ * 
+ * This function makes the dashboard image the updated dashboard image for the course.
+ */
+async function updateCourseImage(courseId, imageId) {
+   try {
+      const addImageResponse = await canvas.put(`/api/v1/courses/${courseId}`, {
+         course: {
+            'image_id': imageId
+         }
+      });
+
+   } catch (err) {
+      console.log(err);
+      return;
+   }
+
+}
+
 /**
  * uploadFileMaster
  * @param {Int} courseId  - the course id for the upload 
@@ -160,7 +146,11 @@ async function uploadFileMaster(courseId, path, bytes) {
    try {
       const parentFolder = 'template';
 
+      //We have to get the authentication and url to "upload" the picture to. this gets stored inside
+      //notifyCanvasFileResponse object.
       const notifyCanvasFileResponse = await notifyCanvasFile(courseId, path, parentFolder, bytes);
+
+      //actually upload it.
       const uploadFileCanvasResponse = await uploadFileCanvas(notifyCanvasFileResponse, path);
    } catch (err) {
       return err;
@@ -214,37 +204,28 @@ function uploadFileCanvas(resObj, path) {
    });
 }
 
+//--------------------------------- DRIVER ----------------------------------------
+
 /**
- * checkFileCanvas
- * @param {string} redirectUrl - an URL string
+ * beginUpload
+ * @param {Array of Course objects} courses 
  * 
- * This function simply makes a GET request to the redirectURL
- * to "complete" the upload process
- * -- Used for 3xx redirects
+ * This function goes through each course object in the array and calls the functions
+ * needed to do the job.
  */
-function checkFileCanvas(redirectUrl, checkFileCanvasCallback) {
-   request.get(redirectUrl, (err) => {
-      if (err) {
-         checkFileCanvasCallback(err);
-         return;
-      }
-
-      checkFileCanvasCallback(null);
-   });
-}
-
 async function beginUpload(courses) {
    for (let course of courses) {
       let courseId = course.id;
 
+      //have to make sure that the images are uploaded at first
       for (let image of course.path) {
          const bytes = fs.statSync(image)['size'];
 
          await uploadFileMaster(courseId, image, bytes);
       }
 
+      //since files are uploaded, we are able to go through and change the files.
       for (let image of course.path) {
-         //replace dashboard
          if (getFilename(image) === 'dashboard.jpg') {
             const img = filterFiles(await retrieveListOfFiles(courseId), getFilename(image));
             const updateCourseImageResponse = await updateCourseImage(courseId, img.id);
@@ -256,6 +237,32 @@ async function beginUpload(courses) {
    }
 };
 
+// --------------------------------- TESTING AND EXPORTS -------------------------------
+
+/**
+ * getAllCourses 
+ * 
+ * This function gets the courses from Canvas
+ */
+async function getAllCourses() {
+   let accountId = 112;
+
+   let courses = await canvas.get(`/api/v1/accounts/${accountId}/courses`, {
+      sort: 'course_name',
+      'include[]': 'subaccount'
+   });
+
+   // ensure that courses are exactly what we need since Canvas is a little
+   // sketchy when it comes to ${userId}/courses
+   return courses.filter(course => course.account_id === parseInt(accountId, '10'));
+}
+
+/**
+ * testing()
+ * 
+ * This will only execute when the global variable, TESTING, is true. Simply set it
+ * to false at the top of the program.
+ */
 async function testing() {
    try {
       let courses = await getAllCourses();
