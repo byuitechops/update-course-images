@@ -67,8 +67,6 @@ $ set CANVAS_API_TOKEN=${INSERT YOUR CANVAS API TOKEN HERE}
 $ export CANVAS_API_TOKEN="${INSERT YOUR CANVAS API TOKEN HERE}"
 ```
 
-Note: The last line in above terminal snippet varies between OS - above is for Windows. Change `set` to whatever the OS uses for setting an environment variable.
-
 ## Commands
 
 All commands below require CANVAS_API_TOKEN environment variable to be set
