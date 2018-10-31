@@ -86,8 +86,7 @@ Executes the uploadCanvas file, which will upload the image to a specific course
 
 Requirements: `npm run clean` must have been executed. This function relies on the results of the clean file execution.
 
-<b>Important</b> (notice given 10/31/2018): I have updated the code to allow `npm run upload` to be run on its own while giving it the array of  
-proper Canvas course objects. The updated way to call `npm run upload` is to ensure that the JSON file that contains the array of Canvas
+<b>Important</b> (notice given 10/31/2018): I have updated the code to allow `npm run upload` to be run on its own while giving it the array of proper Canvas course objects. The updated way to call `npm run upload` is to ensure that the JSON file that contains the array of Canvas
 course objects exists and execute `npm run upload ${insert your filepath to JSON file here}`. For example, I have a file named exampleCourses.json
 inside the test folder and I would run `npm run upload ./test/exampleCourses.json` to get the files to upload. Same requirements are enforced.
 
