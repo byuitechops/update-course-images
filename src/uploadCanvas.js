@@ -4,8 +4,8 @@ const canvas = require('canvas-api-wrapper');
 const request = require('request');
 const asyncLib = require('async');
 
+//change this when you are wanting to run it on McGrath Test # courses
 const TESTING = false;
-//Master Courses - 42
 
 // -------------------------------- HELPER FUNCTIONS ---------------------------
 
@@ -194,6 +194,7 @@ function uploadFileCanvas(resObj, path) {
    let formData = resObj.upload_params;
    formData.file = fs.createReadStream(path);
 
+   //we have created the formdata needed and are now uploading it to the url that Canvas has given us
    request.post({
       url: url,
       formData: formData
@@ -283,6 +284,7 @@ async function testing() {
    }
 }
 
+//automatically start the program
 (async () => {
    if (TESTING) {
       testing();
@@ -306,6 +308,7 @@ async function testing() {
    }
 })();
 
+//we are exporting beginUpload with the requirement that an array of Canvas course objects are being passed in.
 module.exports = {
    beginUpload
 };

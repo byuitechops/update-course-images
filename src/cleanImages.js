@@ -149,6 +149,7 @@ function moveFiles(path, filesArray, moveFilesCallback) {
             //move the file
             fs.rename(`${PATH}/${files[1][key].path}`, `${path}/${files[0]}/${type}`, (err) => {
                if (err) {
+                  //store the error for the actual eachCallback call
                   errorThrew = err;
                   return;
                }
@@ -176,7 +177,8 @@ function moveFiles(path, filesArray, moveFilesCallback) {
  * @param {Array} files 
  * 
  * This function simply uses underscore to group the files up by course 
- * to make life easier.
+ * to make life easier. We are grouping the object array by courses to ensure
+ * that the homeImage and dashboard are in the array for their respective courses.
  */
 function breakFiles(files) {
    return _.pairs(_.groupBy(files, 'course'));
