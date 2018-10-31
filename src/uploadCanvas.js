@@ -1,9 +1,10 @@
+const _ = require('underscore');
 const fs = require('fs-extra');
 const canvas = require('canvas-api-wrapper');
 const request = require('request');
 const asyncLib = require('async');
 
-const TESTING = true;
+const TESTING = false;
 //Master Courses - 42
 
 // -------------------------------- HELPER FUNCTIONS ---------------------------
@@ -214,7 +215,14 @@ function uploadFileCanvas(resObj, path) {
  * needed to do the job.
  */
 async function beginUpload(courses) {
-   for (let course of courses) {
+   if (!courses) {
+      console.log('No courses object passed in. Please ensure that you are passing in a Canvas course object.');
+      return;
+   }
+
+   let updatedCourses = await createObjects(courses);
+
+   for (let course of updatedCourses) {
       let courseId = course.id;
 
       //have to make sure that the images are uploaded at first
@@ -266,7 +274,7 @@ async function getAllCourses() {
 async function testing() {
    try {
       let courses = await getAllCourses();
-      const beginUploadResponse = await beginUpload(await createObjects(courses));
+      const beginUploadResponse = await beginUpload(courses);
    } catch (err) {
       if (err) {
          console.log(err);
@@ -275,7 +283,28 @@ async function testing() {
    }
 }
 
-if (TESTING) testing();
+(async () => {
+   if (TESTING) {
+      testing();
+   } else {
+      let fileName = process.argv[2];
+
+      if (!fileName) {
+         console.log('Error with file. Please ensure that you are including it in the command line');
+         return;
+      }
+
+      try {
+         let fileContents = JSON.parse(await fs.readFile(fileName, 'utf-8'));
+         const beginUploadResponse = await beginUpload(_(fileContents).toArray());
+      } catch (err) {
+         if (err) {
+            console.log(err);
+            return;
+         }
+      }
+   }
+})();
 
 module.exports = {
    beginUpload

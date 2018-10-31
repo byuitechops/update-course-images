@@ -1,10 +1,10 @@
 # update-course-images
 
 ## Purpose
-Update the image that is on the home page and the course image (the one that gets displayed for the course in Dashboard).
+Update the image that is on the home page and the course image (the one that gets displayed for the course in the Dashboard view in Canvas).
 
 The entire process is purely automated. This will only require the images folder that consists of only images inside of the folder
-titled `coursename_dashboard.imgextension` or `coursename_homeImage.imgextension` with `coursename` being a course name like FDREL 324, etc. This
+titled `coursename_dashboard.imgextension` or `coursename_homeImage.imgextension` with `coursename` being a course name like CS 235, etc. This
 also requires an array of course objects from the Canvas API, just like: 
 ```sh
 [
@@ -52,7 +52,18 @@ also requires an array of course objects from the Canvas API, just like:
 $ git clone https://github.com/byuitechops/update-course-images.git
 $ cd update-course-image
 $ npm i
+$ ${Canvas requires an API token and we are doing it through env variables. different ways of setting is dependent on your OS and is shown below}
+```
+
+```sh
+# Powershell
+$ $env:CANVAS_API_TOKEN="${INSERT YOUR CANVAS API TOKEN HERE}"
+
+# cmd
 $ set CANVAS_API_TOKEN=${INSERT YOUR CANVAS API TOKEN HERE}
+
+# Linux and Mac
+$ export CANVAS_API_TOKEN="${INSERT YOUR CANVAS API TOKEN HERE}"
 ```
 
 Note: The last line in above terminal snippet varies between OS - above is for Windows. Change `set` to whatever the OS uses for setting an environment variable.
@@ -75,6 +86,11 @@ Requirements: none
 Executes the uploadCanvas file, which will upload the image to a specific course with the course id.
 
 Requirements: `npm run clean` must have been executed. This function relies on the results of the clean file execution.
+
+<b>Important</b> (notice given 10/31/2018): I have updated the code to allow `npm run upload` to be run on its own while giving it the array of  
+proper Canvas course objects. The updated way to call `npm run upload` is to ensure that the JSON file that contains the array of Canvas
+course objects exists and execute `npm run upload ${insert your filepath to JSON file here}`. For example, I have a file named exampleCourses.json
+inside the test folder and I would run `npm run upload ./test/exampleCourses.json` to get the files to upload. Same requirements are enforced.
 
 #### `npm run clean`
 Executes the cleanImages file, which will clean the images folder and create a new folder named updatedImages, which will
