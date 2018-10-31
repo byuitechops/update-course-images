@@ -52,10 +52,11 @@ also requires an array of course objects from the Canvas API, just like:
 $ git clone https://github.com/byuitechops/update-course-images.git
 $ cd update-course-image
 $ npm i
-$ ${Canvas requires an API token and we are doing it through env variables. different ways of setting is dependent on your OS and is shown below}
+$ ${Insert whatever your OS allows shown in below code snippet}
 ```
 
 ```sh
+# Canvas requires an API token and we are doing it through env variables.
 # Powershell
 $ $env:CANVAS_API_TOKEN="${INSERT YOUR CANVAS API TOKEN HERE}"
 
