@@ -9,39 +9,13 @@ chai.use(require('chai-like'));
 chai.use(require('chai-things'));
 
 const paths = ['dashboard.jpg', 'homeimage.jpg'];
-const COURSES = [{
-      'id': 26932,
-      'path': paths
-   },
-   {
-      'id': 26934,
-      'path': paths
-   },
-   {
-      'id': 26972,
-      'path': paths
-   },
-   {
-      'id': 26974,
-      'path': paths
-   },
-   {
-      'id': 26976,
-      'path': paths
-   },
-   {
-      'id': 26978,
-      'path': paths
-   },
-   {
-      'id': 26980,
-      'path': paths
-   }
-];
 
 describe('update-course-images', function () {
+
+   //test only cleanImages file
    describe('cleanImages.js test cases', function (done) {
       describe('image folder', function () {
+         //all images in the /images folder should be moved into /updatedImages
          it('should have no images at all in /images folder', function (done) {
             fs.readdir('./images', function (err, files) {
                expect(files).to.have.lengthOf(0);
@@ -51,6 +25,8 @@ describe('update-course-images', function () {
       });
 
       describe('updatedImages folder', function () {
+         //we have 7 courses made for testing
+         //neeed to make sure that the /updatedImages do contain folders
          it('should have 1,334 (real courses) + 7 (test courses) files in /updatedImages folder', function (done) {
             fs.readdir('./updatedImages', function (err, files) {
                expect(files).to.have.lengthOf(1341);
@@ -73,7 +49,7 @@ describe('update-course-images', function () {
                   resolve();
                });
          });
-      }).timeout(20000);
+      }).timeout(9000);
 
       it('should have 16 entries in discrepancies array upon making updatedImages with less than two files in a folder', function () {
          //A special updatedImages folder exist to test if it actually
@@ -85,6 +61,6 @@ describe('update-course-images', function () {
                   resolve();
                });
          });
-      }).timeout(20000);
+      }).timeout(9000);
    });
 });

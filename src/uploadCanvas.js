@@ -6,6 +6,7 @@ const asyncLib = require('async');
 
 //change this when you are wanting to run it on McGrath Test # courses
 const TESTING = false;
+canvas.subdomain = 'byui.test';
 
 // -------------------------------- HELPER FUNCTIONS ---------------------------
 
@@ -16,7 +17,7 @@ const TESTING = false;
  * This function simply makes a class name (FDREL 324 - R-- etc) into just fdrel324
  */
 function fixClassString(str) {
-   return str.split(' ').splice(0, 2).join(' ').replace(/\s/g, '').toLowerCase()
+   return str.replace(/\(+|\)+/g, '').replace(/\./g, ' ').split(' ').splice(0, 2).join(' ').replace(/\s+|\:+/g, '').toLowerCase();
 }
 
 /**
@@ -85,6 +86,7 @@ async function createObjects(courses) {
  * Course Array should be like this after it finishes: 
  * [
  *    {
+ *       'courseName': updatedPath
  *       'id': courseId,
  *       'path': ['dashboard.jpg', 'homeimage.jpg']
  *    },
@@ -93,21 +95,54 @@ async function createObjects(courses) {
  */
 async function createCourseArray(folders, courses) {
    const path = './updatedImages';
+   let neededFiles = [];
 
-   return await Promise.all(courses.map(async (course, index) => {
-      let newPath = fixClassString(folders[index]);
-      let files = await fs.readdir(`${path}/${newPath}`);
-      files = files.map(file => `${path}/${newPath}/${file}`);
+   let updatedCourses = await Promise.all(courses.map(async course => {
+      let folderIndex = folders.findIndex(folder => folder === fixClassString(course.course_code));
+      let newPath = folders[folderIndex];
 
-      return {
-         'courseName': newPath,
-         'id': course.id,
-         'path': files
+      if (!newPath) {
+         if (neededFiles.indexOf(course.course_code) === -1) {
+            neededFiles.push(course.course_code);
+         }
+         return undefined;
+      } else {
+         let files = await fs.readdir(`${path}/${newPath}`);
+         files = files.map(file => `${path}/${newPath}/${file}`);
+
+         return {
+            'courseName': newPath,
+            'id': course.id,
+            'path': files
+         }
       }
    }));
+
+   console.log(JSON.stringify(neededFiles));
+
+   return updatedCourses;
 };
 
-// ------------------------------------- UPLOAD ------------------------------
+// --------------------------------- URL FILE UPLOAD ----------------------------
+
+async function notifyCanvasFileURL(courseId, fileUrl, fileName, bytes, parentFolder) {
+   try {
+      const responseObj = canvas.post(`/api/v1/courses/${courseId}/files`, {
+         'url': fileUrl,
+         'name': fileName,
+         'size': bytes,
+         'content-type': 'image/jpeg',
+         'parent_folder_path': parentFolder
+      });
+
+      return responseObj;
+   } catch (err) {
+      console.log(err);
+      return;
+   }
+}
+
+// --------------------------------- LOCAL FILE UPLOAD --------------------------
 
 /**
  * updateCourseImage
@@ -128,7 +163,6 @@ async function updateCourseImage(courseId, imageId) {
       console.log(err);
       return;
    }
-
 }
 
 /**
@@ -139,11 +173,6 @@ async function updateCourseImage(courseId, imageId) {
  * This function acts as a driver to upload the local files to their respective courses
  */
 async function uploadFileMaster(courseId, path, bytes) {
-   const functions = [
-      uploadFileCanvas,
-      // checkFileCanvas -- Canvas updated file upload - https://canvas.instructure.com/doc/api/file.breaking.html
-   ];
-
    try {
       const parentFolder = 'template';
 
@@ -223,47 +252,46 @@ async function beginUpload(courses) {
 
    let updatedCourses = await createObjects(courses);
 
-   for (let course of updatedCourses) {
-      let courseId = course.id;
+   // for (let course of updatedCourses) {
+   //    let courseId = course.id;
 
-      //have to make sure that the images are uploaded at first
-      for (let image of course.path) {
-         const bytes = fs.statSync(image)['size'];
+   //    //have to make sure that the images are uploaded at first
+   //    for (let image of course.path) {
+   //       const bytes = fs.statSync(image)['size'];
 
-         await uploadFileMaster(courseId, image, bytes);
-      }
+   //       await uploadFileMaster(courseId, image, bytes);
+   //    }
 
-      //since files are uploaded, we are able to go through and change the files.
-      for (let image of course.path) {
-         if (getFilename(image) === 'dashboard.jpg') {
-            const img = filterFiles(await retrieveListOfFiles(courseId), getFilename(image));
-            const updateCourseImageResponse = await updateCourseImage(courseId, img.id);
-            console.log(`Updated dashboard image for ${course.courseName}`);
-         } else {
-            console.log(`Updated banner image for ${course.courseName}`);
-         }
-      }
-   }
+   //    //since files are uploaded, we are able to go through and change the files.
+   //    for (let image of course.path) {
+   //       if (getFilename(image) === 'dashboard.jpg') {
+   //          const img = filterFiles(await retrieveListOfFiles(courseId), getFilename(image));
+   //          const updateCourseImageResponse = await updateCourseImage(courseId, img.id);
+   //          console.log(`Updated dashboard image for ${course.courseName}`);
+   //       } else {
+   //          console.log(`Updated banner image for ${course.courseName}`);
+   //       }
+   //    }
+   // }
 };
 
 // --------------------------------- TESTING AND EXPORTS -------------------------------
 
 /**
  * getAllCourses 
+ * @param {Int} subaccountId
  * 
- * This function gets the courses from Canvas
+ * This function gets the courses from Canvas under a specified subaccount.
  */
-async function getAllCourses() {
-   let accountId = 112;
-
-   let courses = await canvas.get(`/api/v1/accounts/${accountId}/courses`, {
+async function getAllCourses(subaccountId) {
+   let courses = await canvas.get(`/api/v1/accounts/${subaccountId}/courses`, {
       sort: 'course_name',
       'include[]': 'subaccount'
    });
 
    // ensure that courses are exactly what we need since Canvas is a little
    // sketchy when it comes to ${userId}/courses
-   return courses.filter(course => course.account_id === parseInt(accountId, '10'));
+   return courses.filter(course => course.account_id === parseInt(subaccountId, '10'));
 }
 
 /**
@@ -274,7 +302,7 @@ async function getAllCourses() {
  */
 async function testing() {
    try {
-      let courses = await getAllCourses();
+      let courses = await getAllCourses(112);
       const beginUploadResponse = await beginUpload(courses);
    } catch (err) {
       if (err) {
@@ -289,6 +317,7 @@ async function testing() {
    if (TESTING) {
       testing();
    } else {
+      //can pass in JSON file in command line
       let fileName = process.argv[2];
 
       if (!fileName) {
@@ -297,8 +326,13 @@ async function testing() {
       }
 
       try {
-         let fileContents = JSON.parse(await fs.readFile(fileName, 'utf-8'));
-         const beginUploadResponse = await beginUpload(_(fileContents).toArray());
+         if (process.argv[2] === 'all') {
+            let courses = await getAllCourses(42);
+            const beginUploadResponse = await beginUpload(courses);
+         } else {
+            let fileContents = JSON.parse(await fs.readFile(fileName, 'utf-8'));
+            const beginUploadResponse = await beginUpload(_(fileContents).toArray());
+         }
       } catch (err) {
          if (err) {
             console.log(err);
