@@ -101,3 +101,8 @@ Executes the folderChecker file, which will check every folder inside updatedIma
 
 Requirements: folder named updatedImages created through `npm run clean`.
 
+#### `npm run courses`
+Executes the retrieveCourses file, which utilizes the Puppeteer API created by Google and grabs information about the courses from Canvas.
+
+Requirements: none
+
