@@ -252,27 +252,27 @@ async function beginUpload(courses) {
 
    let updatedCourses = await createObjects(courses);
 
-   // for (let course of updatedCourses) {
-   //    let courseId = course.id;
+   for (let course of updatedCourses) {
+      let courseId = course.id;
 
-   //    //have to make sure that the images are uploaded at first
-   //    for (let image of course.path) {
-   //       const bytes = fs.statSync(image)['size'];
+      //have to make sure that the images are uploaded at first
+      for (let image of course.path) {
+         const bytes = fs.statSync(image)['size'];
 
-   //       await uploadFileMaster(courseId, image, bytes);
-   //    }
+         await uploadFileMaster(courseId, image, bytes);
+      }
 
-   //    //since files are uploaded, we are able to go through and change the files.
-   //    for (let image of course.path) {
-   //       if (getFilename(image) === 'dashboard.jpg') {
-   //          const img = filterFiles(await retrieveListOfFiles(courseId), getFilename(image));
-   //          const updateCourseImageResponse = await updateCourseImage(courseId, img.id);
-   //          console.log(`Updated dashboard image for ${course.courseName}`);
-   //       } else {
-   //          console.log(`Updated banner image for ${course.courseName}`);
-   //       }
-   //    }
-   // }
+      //since files are uploaded, we are able to go through and change the files.
+      for (let image of course.path) {
+         if (getFilename(image) === 'dashboard.jpg') {
+            const img = filterFiles(await retrieveListOfFiles(courseId), getFilename(image));
+            const updateCourseImageResponse = await updateCourseImage(courseId, img.id);
+            console.log(`Updated dashboard image for ${course.courseName}`);
+         } else {
+            console.log(`Updated banner image for ${course.courseName}`);
+         }
+      }
+   }
 };
 
 // --------------------------------- TESTING AND EXPORTS -------------------------------
