@@ -52,6 +52,7 @@ async function diveInFolders(files, filePath) {
  */
 async function initiateChecker(testBadFolder = false) {
    try {
+      //are we running unit tests?
       let filePath = (!testBadFolder) ? './updatedImages' : './updatedImages-test';
       let results = await fs.readdir(filePath);
       let discrepanciesArray = await diveInFolders(results, filePath);

@@ -6,6 +6,7 @@
    "scripts": {
       "upload": "node ./src/uploadCanvas.js",
       "clean": "node ./src/cleanImages.js",
+      "courses": "node ./src/retrieveCourses.js",
       "checker": "node ./src/folderChecker.js",
       "test": "mocha ./test/tests.js",
       "coverage": "nyc mocha"
@@ -27,11 +28,15 @@
       "chai": "^4.2.0",
       "chai-like": "^1.1.1",
       "chai-things": "^0.2.0",
+      "cheerio": "^1.0.0-rc.2",
+      "d3-dsv": "^1.0.10",
       "fs": "0.0.1-security",
       "fs-extra": "^7.0.0",
       "mocha": "^5.2.0",
       "npm": "^6.4.1",
       "path": "^0.12.7",
+      "prompt": "^1.0.0",
+      "puppeteer": "^1.10.0",
       "request": "^2.88.0",
       "underscore": "^1.9.1"
    },
