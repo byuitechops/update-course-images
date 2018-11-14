@@ -3,7 +3,7 @@
 /images
 /images-backup
 /.nyc_output
-*.jpg
+/updatedImages-test
 /src/coursesContent.js
 courses.json
 scrapeResults.json
