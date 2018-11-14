@@ -8,6 +8,7 @@ const TESTING = true;
 // canvas.subdomain = 'byui.test';
 
 const PARENT_FOLDER = 'template';
+const GITHUB_URL = `https://raw.githubusercontent.com/byuitechops/update-course-images/master/updatedImages`;
 
 // -------------------------------- HELPER FUNCTIONS ---------------------------
 
@@ -119,44 +120,39 @@ async function createCourseArray(folders, courses) {
       }
    }));
 
-   console.log(JSON.stringify(neededFiles));
-
    return updatedCourses;
 };
 
 // --------------------------------- URL FILE UPLOAD ----------------------------
-async function urlUploadMaster() { //pass in courses object when finished
-   try {
-      //temp stuff
-      let courseId = 26932;
-      let courseName = 'homeImage.png'
-
-      const url = 'https://content.byui.edu/file/2390954c-eadb-4592-aa96-5a29275f9404/1/Course/Banner.png';
-      let size = await findPhotoUrl(url);
-      let responseObject = await notifyCanvasFileURL(courseId, url, courseName, size);
-      let responseUploadUrl = await uploadCanvasUrl(responseObject, url);
-      await checkProgress(responseObject.progress.id);
-   } catch (err) {
-      if (err) throw err;
-   }
-}
-
-//test file - CS 470 banner
-//https://content.byui.edu/file/2390954c-eadb-4592-aa96-5a29275f9404/1/Course/Banner.png
+/**
+ * findPhotoUrl
+ * @param {String} url 
+ * 
+ * This function makes a request to the URL to get the size since Canvas requires the size of an image
+ */
 async function findPhotoUrl(url) {
    request(url, (err, res) => {
       if (err) throw err;
-
 
       return res.headers['content-length'];
    });
 }
 
-async function notifyCanvasFileURL(courseId, url, fileName, bytes) {
+/**
+ * notifyCanvasFileURL
+ * @param {Int} courseId 
+ * @param {String} url 
+ * @param {Int} bytes 
+ * 
+ * This function notifies Canvas that a file is ready to be uploaded and this will return
+ * the response object that it gets from Canvas. This includes all of the auth, url and other 
+ * parameters to make a POST to.
+ */
+async function notifyCanvasFileURL(courseId, url, bytes) {
    try {
-      const responseObj = canvas.post(`/api/v1/courses/${courseId}/files`, {
+      const responseObj = await canvas.post(`/api/v1/courses/${courseId}/files`, {
          'url': url,
-         'name': fileName,
+         'name': getFilename(url),
          'size': bytes,
          'content-type': 'image/jpeg',
          'parent_folder_path': PARENT_FOLDER
@@ -168,6 +164,13 @@ async function notifyCanvasFileURL(courseId, url, fileName, bytes) {
    }
 }
 
+/**
+ * uploadCanvasURL
+ * @param {Obj} resObj 
+ * @param {fileUrl} fileUrl 
+ * 
+ * This function makes a POST request and passes the URL of the photo.
+ */
 async function uploadCanvasUrl(resObj, fileUrl) {
    let url = resObj.upload_url;
    let formData = resObj.upload_params;
@@ -185,14 +188,20 @@ async function uploadCanvasUrl(resObj, fileUrl) {
    });
 }
 
+/**
+ * checkProgress
+ * @param {Int} progressId 
+ * 
+ * This makes sure that the image has finished uploading to Canvas since the response object
+ * returns a Progress class. It usually uploads pretty fast since the files are small in size
+ * but this is good practice.
+ */
 async function checkProgress(progressId) {
    let results = '';
 
    do {
       results = await canvas.get(`/api/v1/progress/${progressId}`)
    } while (results.workflow_state !== 'completed');
-
-   console.log('Officially uploaded.');
 }
 
 // --------------------------------- LOCAL FILE UPLOAD --------------------------
@@ -219,13 +228,13 @@ async function updateCourseImage(courseId, imageId) {
 }
 
 /**
- * uploadFileMaster
+ * uploadLocalFileMaster
  * @param {Int} courseId  - the course id for the upload 
  * @param {String} path   - string that contains filepath
  * 
  * This function acts as a driver to upload the local files to their respective courses
  */
-async function uploadFileMaster(courseId, path, bytes) {
+async function uploadLocalFileMaster(courseId, path, bytes) {
    try {
       //We have to get the authentication and url to "upload" the picture to. this gets stored inside
       //notifyCanvasFileResponse object.
@@ -295,7 +304,7 @@ function uploadFileCanvas(resObj, path) {
  * This function goes through each course object in the array and calls the functions
  * needed to do the job.
  */
-async function beginUpload(courses) {
+async function beginUpload(courses, uploadUrl = false) {
    if (!courses) {
       console.log('No courses object passed in. Please ensure that you are passing in a Canvas course object.');
       return;
@@ -310,7 +319,17 @@ async function beginUpload(courses) {
       for (let image of course.path) {
          const bytes = fs.statSync(image)['size'];
 
-         await uploadFileMaster(courseId, image, bytes);
+
+         if (uploadUrl) {
+            let url = GITHUB_URL + `/${course.courseName}/${getFilename(image)}`;
+            let size = await findPhotoUrl(url);
+            let responseObject = await notifyCanvasFileURL(courseId, url, size);
+            let responseUploadUrl = await uploadCanvasUrl(responseObject, url);
+
+            await checkProgress(responseObject.progress.id);
+         } else {
+            await uploadLocalFileMaster(courseId, image, bytes);
+         }
       }
 
       //since files are uploaded, we are able to go through and change the files.
@@ -363,44 +382,29 @@ async function testing() {
    }
 }
 
-async function urlTesting() {
+//automatically start the program
+(async () => {
+   //can pass in JSON file in command line
+   let fileName = process.argv[2];
+
+   if (!fileName) {
+      console.log('Error with file. Please ensure that you are including it in the command line');
+      return;
+   }
+
    try {
-      await urlUploadMaster();
+      if (process.argv[2] === 'all') {
+         let courses = await getAllCourses(42);
+         const beginUploadResponse = await beginUpload(courses);
+      } else {
+         let fileContents = JSON.parse(await fs.readFile(fileName, 'utf-8'));
+         //replace TESTING with user's input
+         const beginUploadResponse = await beginUpload(_(fileContents).toArray(), TESTING);
+      }
    } catch (err) {
       if (err) {
          console.log(err);
          return;
-      }
-   }
-}
-
-//automatically start the program
-(async () => {
-   if (TESTING) {
-      // testing();
-      urlTesting();
-   } else {
-      //can pass in JSON file in command line
-      let fileName = process.argv[2];
-
-      if (!fileName) {
-         console.log('Error with file. Please ensure that you are including it in the command line');
-         return;
-      }
-
-      try {
-         if (process.argv[2] === 'all') {
-            let courses = await getAllCourses(42);
-            const beginUploadResponse = await beginUpload(courses);
-         } else {
-            let fileContents = JSON.parse(await fs.readFile(fileName, 'utf-8'));
-            const beginUploadResponse = await beginUpload(_(fileContents).toArray());
-         }
-      } catch (err) {
-         if (err) {
-            console.log(err);
-            return;
-         }
       }
    }
 })();
