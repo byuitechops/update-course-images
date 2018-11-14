@@ -1,5 +1,12 @@
+const fs = require('fs-extra');
 const prompt = require('prompt');
+const canvas = require('canvas-api-wrapper');
+const asyncLib = require('async');
 const puppeteer = require('puppeteer');
+const {
+   promisify
+} = require('util');
+const asyncEach = promisify(asyncLib.each);
 
 const CANVAS_URL = 'https://byui.instructure.com';
 
@@ -34,13 +41,13 @@ function promptUser(promptUserCallback) {
             required: true
          },
          semester: {
-            pattern: /^\s*(spring|fall|winter)\s*$/,
-            message: 'semester must only be spring, fall, or winter - all lowercases',
+            pattern: /^\s*(spring|fall|winter|none)\s*$/,
+            message: 'semester must only be spring, fall, winter, or none - all lowercases',
             required: true
          },
          year: {
-            pattern: /20\d{2}/,
-            message: 'year must only be digits i.e. 2018',
+            pattern: /\s*(20\d{2}|none)\s*/,
+            message: 'year must only be digits (or type "none" if you don\'t want year) i.e. 2018',
             required: true
          }
       }
@@ -147,7 +154,13 @@ function chunkify(tds) {
  */
 async function navigatePages(data, browser) {
    const page = await browser.newPage();
-   let url = `https://byui.instructure.com/accounts/1?search_term=${data.searchTerm}.${data.year}.${data.semester}&page=1`;
+   const type = ['none'];
+   let searchTerm = `${data.searchTerm}`;
+
+   if (!type.includes(data.year) && !type.includes(data.semester)) {
+      searchTerm += `.${data.year}.${data.semester}`;
+   }
+   let url = `https://byui.instructure.com/accounts/1?search_term=${searchTerm}&page=1`;
 
    await page.goto(url);
    await page.waitForSelector('#content table tr td');
@@ -173,8 +186,36 @@ async function navigatePages(data, browser) {
          break;
       }
    }
-   console.log(allData);
-   return allData;
+   return {
+      searchTerm: searchTerm,
+      results: allData
+   };
+}
+
+async function createCanvas(filePath) {
+   const savePath = '../courses.json';
+
+   try {
+      if (!fs.existsSync(filePath)) {
+         throw new Error('Something bad happened here...');
+      }
+
+      const courses = JSON.parse(await fs.readFile(filePath));
+
+      let eachData = [];
+      await asyncEach(courses.results, async course => {
+         courseId = course[0][0].split('/').splice(-1);
+
+         const courseResponse = await canvas.get(`/api/v1/courses/${courseId}`);
+
+         eachData.push(courseResponse);
+      });
+
+      await fs.writeFile(savePath, JSON.stringify(eachData), 'utf8');
+      console.log(`Successfully saved all courses objects to ${savePath}`)
+   } catch (err) {
+      throw err;
+   }
 }
 
 (async () => {
@@ -185,13 +226,20 @@ async function navigatePages(data, browser) {
       }
 
       try {
+         const filePath = '../scrapeResults.json';
          const browser = await puppeteer.launch({
             headless: false
          });
          const authedBrowser = await createAuthedPuppeteer(data, browser);
          const navigatorResponse = await navigatePages(data, authedBrowser);
 
+         const createFileResponse = await fs.writeFile(filePath, JSON.stringify(navigatorResponse), 'utf8');
+         console.log(`Saved results of scrape to ${filePath}`);
+
          authedBrowser.close();
+
+         const createCanvasResponse = await createCanvas(filePath);
+
       } catch (err) {
          console.log(err);
          return;

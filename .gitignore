@@ -6,3 +6,5 @@
 /.nyc_output
 *.jpg
 /src/coursesContent.js
+courses.json
+scrapeResults.json
