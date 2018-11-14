@@ -94,7 +94,7 @@ inside the test folder and I would run `npm run upload ./test/exampleCourses.jso
 Executes the cleanImages file, which will clean the images folder and create a new folder named updatedImages, which will
 contain folders of courses and their respective images.
 
-Requirements: no folder named updatedImages and a folder titled images that contains all of the folders 
+Requirements: no folder named updatedImages and a folder named images that contains all of the folders 
 
 #### `npm run checker`
 Executes the folderChecker file, which will check every folder inside updatedImages folder and ensure that it follows the rules.
@@ -103,6 +103,10 @@ Requirements: folder named updatedImages created through `npm run clean`.
 
 #### `npm run courses`
 Executes the retrieveCourses file, which utilizes the Puppeteer API created by Google and grabs information about the courses from Canvas.
+
+This creates two files:
+   - scrapeResults.json - This holds the results for the Puppeteer Canvas search.
+   - courses.json - This holds an array of Canvas course objects. 
 
 Requirements: none
 

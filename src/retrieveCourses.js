@@ -192,6 +192,14 @@ async function navigatePages(data, browser) {
    };
 }
 
+/**
+ * createCanvas
+ * @param {String} filePath 
+ * 
+ * This function goes through the JSON file (given by filePath) that contains an array of results
+ * gathered by Puppeteer and makes all of the API calls to Canvas to retrieve the course object. 
+ * The end results is an array of all course objects.
+ */
 async function createCanvas(filePath) {
    const savePath = '../courses.json';
 
