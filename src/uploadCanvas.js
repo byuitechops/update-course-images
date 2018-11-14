@@ -2,11 +2,12 @@ const _ = require('underscore');
 const fs = require('fs-extra');
 const canvas = require('canvas-api-wrapper');
 const request = require('request');
-const asyncLib = require('async');
 
 //change this when you are wanting to run it on McGrath Test # courses
-const TESTING = false;
-canvas.subdomain = 'byui.test';
+const TESTING = true;
+// canvas.subdomain = 'byui.test';
+
+const PARENT_FOLDER = 'template';
 
 // -------------------------------- HELPER FUNCTIONS ---------------------------
 
@@ -124,22 +125,74 @@ async function createCourseArray(folders, courses) {
 };
 
 // --------------------------------- URL FILE UPLOAD ----------------------------
+async function urlUploadMaster() { //pass in courses object when finished
+   try {
+      //temp stuff
+      let courseId = 26932;
+      let courseName = 'homeImage.png'
 
-async function notifyCanvasFileURL(courseId, fileUrl, fileName, bytes, parentFolder) {
+      const url = 'https://content.byui.edu/file/2390954c-eadb-4592-aa96-5a29275f9404/1/Course/Banner.png';
+      let size = await findPhotoUrl(url);
+      let responseObject = await notifyCanvasFileURL(courseId, url, courseName, size);
+      let responseUploadUrl = await uploadCanvasUrl(responseObject, url);
+      await checkProgress(responseObject.progress.id);
+   } catch (err) {
+      if (err) throw err;
+   }
+}
+
+//test file - CS 470 banner
+//https://content.byui.edu/file/2390954c-eadb-4592-aa96-5a29275f9404/1/Course/Banner.png
+async function findPhotoUrl(url) {
+   request(url, (err, res) => {
+      if (err) throw err;
+
+
+      return res.headers['content-length'];
+   });
+}
+
+async function notifyCanvasFileURL(courseId, url, fileName, bytes) {
    try {
       const responseObj = canvas.post(`/api/v1/courses/${courseId}/files`, {
-         'url': fileUrl,
+         'url': url,
          'name': fileName,
          'size': bytes,
          'content-type': 'image/jpeg',
-         'parent_folder_path': parentFolder
+         'parent_folder_path': PARENT_FOLDER
       });
 
       return responseObj;
    } catch (err) {
-      console.log(err);
-      return;
+      if (err) throw err;
    }
+}
+
+async function uploadCanvasUrl(resObj, fileUrl) {
+   let url = resObj.upload_url;
+   let formData = resObj.upload_params;
+   formData.target_url = fileUrl;
+
+   //we have created the formdata needed and are now uploading it to the url that Canvas has given us
+   request.post({
+      url: url,
+      formData: formData
+   }, (err) => {
+      if (err) {
+         console.log(err);
+         return;
+      }
+   });
+}
+
+async function checkProgress(progressId) {
+   let results = '';
+
+   do {
+      results = await canvas.get(`/api/v1/progress/${progressId}`)
+   } while (results.workflow_state !== 'completed');
+
+   console.log('Officially uploaded.');
 }
 
 // --------------------------------- LOCAL FILE UPLOAD --------------------------
@@ -174,11 +227,9 @@ async function updateCourseImage(courseId, imageId) {
  */
 async function uploadFileMaster(courseId, path, bytes) {
    try {
-      const parentFolder = 'template';
-
       //We have to get the authentication and url to "upload" the picture to. this gets stored inside
       //notifyCanvasFileResponse object.
-      const notifyCanvasFileResponse = await notifyCanvasFile(courseId, path, parentFolder, bytes);
+      const notifyCanvasFileResponse = await notifyCanvasFile(courseId, path, bytes);
 
       //actually upload it.
       const uploadFileCanvasResponse = await uploadFileCanvas(notifyCanvasFileResponse, path);
@@ -194,12 +245,12 @@ async function uploadFileMaster(courseId, path, bytes) {
  * 
  * 
  */
-async function notifyCanvasFile(courseId, path, parentFolder, bytes) {
+async function notifyCanvasFile(courseId, path, bytes) {
    const resObj = await canvas.post(`/api/v1/courses/${courseId}/files`, {
       'name': getFilename(path),
       'size': bytes,
       'content-type': 'image/jpeg',
-      'parent_folder_path': parentFolder
+      'parent_folder_path': PARENT_FOLDER
    });
 
    return resObj;
@@ -312,10 +363,22 @@ async function testing() {
    }
 }
 
+async function urlTesting() {
+   try {
+      await urlUploadMaster();
+   } catch (err) {
+      if (err) {
+         console.log(err);
+         return;
+      }
+   }
+}
+
 //automatically start the program
 (async () => {
    if (TESTING) {
-      testing();
+      // testing();
+      urlTesting();
    } else {
       //can pass in JSON file in command line
       let fileName = process.argv[2];

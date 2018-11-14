@@ -2,7 +2,6 @@
 *.txt
 /images
 /images-backup
-/updatedImages
 /.nyc_output
 *.jpg
 /src/coursesContent.js
