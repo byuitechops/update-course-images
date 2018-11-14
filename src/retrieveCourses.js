@@ -201,7 +201,7 @@ async function navigatePages(data, browser) {
  * The end results is an array of all course objects.
  */
 async function createCanvas(filePath) {
-   const savePath = '../courses.json';
+   const savePath = './courses.json';
 
    try {
       if (!fs.existsSync(filePath)) {
@@ -234,7 +234,7 @@ async function createCanvas(filePath) {
       }
 
       try {
-         const filePath = '../scrapeResults.json';
+         const filePath = './scrapeResults.json';
          const browser = await puppeteer.launch({
             headless: false
          });
