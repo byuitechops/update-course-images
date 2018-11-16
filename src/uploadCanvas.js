@@ -65,17 +65,23 @@ function filterFiles(files, name) {
 
 /**
  * createObjects
+ * @param {Obj} courses
+ * @param {Bool} isUrl
  * 
  * This function gets the list of courses and passes it into createCourseArray. It'll
  * get the object array and simply return it.
  */
-async function createObjects(courses) {
-   const filepath = './updatedImages';
+async function createObjects(courses, isUrl = false) {
+   if (!isUrl) {
+      const filepath = './updatedImages';
 
-   let tempCourses = courses.map(course => fixClassString(course.course_code));
-   let files = await fs.readdir(filepath);
-   let newFiles = files.filter(file => tempCourses.includes(file));
-   return await createCourseArray(newFiles, courses);
+      let tempCourses = courses.map(course => fixClassString(course.course_code));
+      let files = await fs.readdir(filepath);
+      let newFiles = files.filter(file => tempCourses.includes(file));
+      return await createCourseArray(newFiles, courses);
+   }
+
+   return await createCourseArrayURL(courses);
 }
 
 /**
@@ -90,29 +96,37 @@ async function createObjects(courses) {
  *    {
  *       'courseName': updatedPath
  *       'id': courseId,
- *       'path': ['dashboard.jpg', 'homeimage.jpg']
+ *       'path': ['dashboard.jpg', 'homeImage.jpg']
  *    },
  *    ...
  * ]
  */
 async function createCourseArray(folders, courses) {
    const path = './updatedImages';
-   let neededFiles = [];
 
    let updatedCourses = await Promise.all(courses.map(async course => {
       let folderIndex = folders.findIndex(folder => folder === fixClassString(course.course_code));
       let newPath = folders[folderIndex];
 
       if (!newPath) {
-         if (neededFiles.indexOf(course.course_code) === -1) {
-            neededFiles.push(course.course_code);
+         return {
+            'success': false,
+            'courseName': fixClassString(course.course_code)
          }
-         return undefined;
       } else {
          let files = await fs.readdir(`${path}/${newPath}`);
          files = files.map(file => `${path}/${newPath}/${file}`);
 
+         //either dashboard or homeimage doesn't exist so warn the user and move on.
+         if (files.length < 2) {
+            return {
+               'success': false,
+               'courseName': fixClassString(course.course_code)
+            }
+         }
+
          return {
+            'success': true,
             'courseName': newPath,
             'id': course.id,
             'path': files
@@ -122,6 +136,39 @@ async function createCourseArray(folders, courses) {
 
    return updatedCourses;
 };
+
+async function createCourseArrayURL(courses) {
+   return await Promise.all(courses.map(async course => {
+      let url = GITHUB_URL + `/${course.courseName}`;
+      let files = ['dashboard.jpg', 'homeImage.jpg'];
+
+      //error is in here
+      let results = await Promise.all(files.map(async file => {
+         let updatedUrl = url + `/${file}`;
+
+         await request(updatedUrl, (err, res) => {
+            if (err) throw err;
+
+            res.statusCode === 200;
+         });
+      }));
+
+      console.log(results);
+      if (results.every(result => result === true)) {
+         return {
+            'success': true,
+            'courseName': fixClassString(course.courseName),
+            'id': course.id,
+            'path': files
+         }
+      } else {
+         return {
+            'success': false,
+            'courseName': fixClassString(course.course_code)
+         }
+      }
+   }));
+}
 
 // --------------------------------- URL FILE UPLOAD ----------------------------
 /**
@@ -134,6 +181,7 @@ async function findPhotoUrl(url) {
    request(url, (err, res) => {
       if (err) throw err;
 
+      // console.log(res.statusCode);
       return res.headers['content-length'];
    });
 }
@@ -310,9 +358,16 @@ async function beginUpload(courses, uploadUrl = false) {
       return;
    }
 
-   let updatedCourses = await createObjects(courses);
+   let badCourses = [];
+   let updatedCourses = await createObjects(courses, TESTING);
 
    for (let course of updatedCourses) {
+      if (!course.success) {
+         badCourses.push(course.courseName);
+
+         continue;
+      }
+
       let courseId = course.id;
 
       //have to make sure that the images are uploaded at first
@@ -342,6 +397,11 @@ async function beginUpload(courses, uploadUrl = false) {
             console.log(`Updated banner image for ${course.courseName}`);
          }
       }
+   }
+
+
+   if (badCourses.length > 0) {
+      console.log('Failed courses: ', badCourses);
    }
 };
 

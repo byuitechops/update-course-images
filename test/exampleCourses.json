@@ -221,5 +221,37 @@
       "hide_final_grades": false,
       "workflow_state": "unpublished",
       "restrict_enrollments_to_course_dates": false
+   },
+   {
+      "id": 26980,
+      "name": "McGrath Test 8",
+      "account_id": 112,
+      "uuid": "qJhGXHYSXoFVbjktiHMGsjBpdSIdbCGCmFAVs0wp",
+      "start_at": null,
+      "grading_standard_id": 1,
+      "is_public": false,
+      "created_at": "2018-10-01T14:37:34Z",
+      "course_code": "McGrath 108",
+      "default_view": "wiki",
+      "root_account_id": 1,
+      "enrollment_term_id": 1,
+      "end_at": null,
+      "public_syllabus": false,
+      "public_syllabus_to_auth": true,
+      "storage_quota_mb": 2000,
+      "is_public_to_auth_users": false,
+      "apply_assignment_group_weights": true,
+      "locale": "en",
+      "subaccount_name": "Sub-Account Testing",
+      "calendar": {
+         "ics": "https://byui.instructure.com/feeds/calendars/course_qJhGXHYSXoFVbjktiHMGsjBpdSIdbCGCmFAVs0wp.ics"
+      },
+      "time_zone": "America/Denver",
+      "blueprint": false,
+      "sis_course_id": null,
+      "integration_id": null,
+      "hide_final_grades": false,
+      "workflow_state": "unpublished",
+      "restrict_enrollments_to_course_dates": false
    }
 ]
