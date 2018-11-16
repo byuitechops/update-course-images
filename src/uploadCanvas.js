@@ -1,7 +1,9 @@
 const _ = require('underscore');
 const fs = require('fs-extra');
+const util = require('util');
 const canvas = require('canvas-api-wrapper');
 const request = require('request');
+const asyncLib = require('async');
 
 //change this when you are wanting to run it on McGrath Test # courses
 const TESTING = true;
@@ -9,6 +11,9 @@ const TESTING = true;
 
 const PARENT_FOLDER = 'template';
 const GITHUB_URL = `https://raw.githubusercontent.com/byuitechops/update-course-images/master/updatedImages`;
+
+const requestAsync = util.promisify(request);
+const asyncEach = util.promisify(asyncLib.each);
 
 // -------------------------------- HELPER FUNCTIONS ---------------------------
 
@@ -89,7 +94,7 @@ async function createObjects(courses, isUrl = false) {
  * @param {Array of Course objects} courses 
  * 
  * This function reads through and creates the object array to prep the system
- * to upload files to Canvas in mass. 
+ * to upload files to Canvas in mass. This is only for local files portion.
  * 
  * Course Array should be like this after it finishes: 
  * [
@@ -137,27 +142,41 @@ async function createCourseArray(folders, courses) {
    return updatedCourses;
 };
 
+/**
+ * createCourseArrayURL
+ * @param {Array of Course objects} courses 
+ * 
+ * This function reads through and creates the object array to prep the system
+ * to upload files to Canvas in mass. This is only for the URL portion.
+ * 
+ * Course Array should be like this after it finishes: 
+ * [
+ *    {
+ *       'courseName': updatedPath
+ *       'id': courseId,
+ *       'path': ['dashboard.jpg', 'homeImage.jpg']
+ *    },
+ *    ...
+ * ]
+ */
 async function createCourseArrayURL(courses) {
    return await Promise.all(courses.map(async course => {
-      let url = GITHUB_URL + `/${course.courseName}`;
+      let url = GITHUB_URL + `/${fixClassString(course.course_code)}`;
       let files = ['dashboard.jpg', 'homeImage.jpg'];
 
-      //error is in here
+
       let results = await Promise.all(files.map(async file => {
-         let updatedUrl = url + `/${file}`;
+         let {
+            statusCode
+         } = await requestAsync(`${url}/${file}`);
 
-         await request(updatedUrl, (err, res) => {
-            if (err) throw err;
-
-            res.statusCode === 200;
-         });
+         return statusCode;
       }));
 
-      console.log(results);
-      if (results.every(result => result === true)) {
+      if (results.every(result => result === 200)) {
          return {
             'success': true,
-            'courseName': fixClassString(course.courseName),
+            'courseName': fixClassString(course.course_code),
             'id': course.id,
             'path': files
          }
@@ -359,46 +378,41 @@ async function beginUpload(courses, uploadUrl = false) {
    }
 
    let badCourses = [];
-   let updatedCourses = await createObjects(courses, TESTING);
+   let updatedCourses = await createObjects(courses);
 
-   for (let course of updatedCourses) {
+   await asyncEach(updatedCourses, async course => {
       if (!course.success) {
          badCourses.push(course.courseName);
 
-         continue;
-      }
+      } else {
+         let courseId = course.id;
 
-      let courseId = course.id;
+         await asyncEach(course.path, async image => {
+            if (uploadUrl) {
+               let url = GITHUB_URL + `/${course.courseName}/${getFilename(image)}`;
+               let size = await findPhotoUrl(url);
+               let responseObject = await notifyCanvasFileURL(courseId, url, size);
+               let responseUploadUrl = await uploadCanvasUrl(responseObject, url);
 
-      //have to make sure that the images are uploaded at first
-      for (let image of course.path) {
-         const bytes = fs.statSync(image)['size'];
+               await checkProgress(responseObject.progress.id);
+            } else {
+               const bytes = fs.statSync(image)['size'];
+               await uploadLocalFileMaster(courseId, image, bytes);
+            }
+         });
 
-
-         if (uploadUrl) {
-            let url = GITHUB_URL + `/${course.courseName}/${getFilename(image)}`;
-            let size = await findPhotoUrl(url);
-            let responseObject = await notifyCanvasFileURL(courseId, url, size);
-            let responseUploadUrl = await uploadCanvasUrl(responseObject, url);
-
-            await checkProgress(responseObject.progress.id);
-         } else {
-            await uploadLocalFileMaster(courseId, image, bytes);
+         //since files are uploaded, we are able to go through and change the files.
+         for (let image of course.path) {
+            if (getFilename(image) === 'dashboard.jpg') {
+               const img = filterFiles(await retrieveListOfFiles(courseId), getFilename(image));
+               const updateCourseImageResponse = await updateCourseImage(courseId, img.id);
+               console.log(`Updated dashboard image for ${course.courseName}`);
+            } else {
+               console.log(`Updated banner image for ${course.courseName}`);
+            }
          }
       }
-
-      //since files are uploaded, we are able to go through and change the files.
-      for (let image of course.path) {
-         if (getFilename(image) === 'dashboard.jpg') {
-            const img = filterFiles(await retrieveListOfFiles(courseId), getFilename(image));
-            const updateCourseImageResponse = await updateCourseImage(courseId, img.id);
-            console.log(`Updated dashboard image for ${course.courseName}`);
-         } else {
-            console.log(`Updated banner image for ${course.courseName}`);
-         }
-      }
-   }
-
+   });
 
    if (badCourses.length > 0) {
       console.log('Failed courses: ', badCourses);
