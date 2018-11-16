@@ -1,7 +1,9 @@
 const _ = require('underscore');
 const fs = require('fs-extra');
+const util = require('util');
 const canvas = require('canvas-api-wrapper');
 const request = require('request');
+const asyncLib = require('async');
 
 //change this when you are wanting to run it on McGrath Test # courses
 const TESTING = true;
@@ -9,6 +11,9 @@ const TESTING = true;
 
 const PARENT_FOLDER = 'template';
 const GITHUB_URL = `https://raw.githubusercontent.com/byuitechops/update-course-images/master/updatedImages`;
+
+const requestAsync = util.promisify(request);
+const asyncEach = util.promisify(asyncLib.each);
 
 // -------------------------------- HELPER FUNCTIONS ---------------------------
 
@@ -65,17 +70,23 @@ function filterFiles(files, name) {
 
 /**
  * createObjects
+ * @param {Obj} courses
+ * @param {Bool} isUrl
  * 
  * This function gets the list of courses and passes it into createCourseArray. It'll
  * get the object array and simply return it.
  */
-async function createObjects(courses) {
-   const filepath = './updatedImages';
+async function createObjects(courses, isUrl = false) {
+   if (!isUrl) {
+      const filepath = './updatedImages';
 
-   let tempCourses = courses.map(course => fixClassString(course.course_code));
-   let files = await fs.readdir(filepath);
-   let newFiles = files.filter(file => tempCourses.includes(file));
-   return await createCourseArray(newFiles, courses);
+      let tempCourses = courses.map(course => fixClassString(course.course_code));
+      let files = await fs.readdir(filepath);
+      let newFiles = files.filter(file => tempCourses.includes(file));
+      return await createCourseArray(newFiles, courses);
+   }
+
+   return await createCourseArrayURL(courses);
 }
 
 /**
@@ -83,36 +94,44 @@ async function createObjects(courses) {
  * @param {Array of Course objects} courses 
  * 
  * This function reads through and creates the object array to prep the system
- * to upload files to Canvas in mass. 
+ * to upload files to Canvas in mass. This is only for local files portion.
  * 
  * Course Array should be like this after it finishes: 
  * [
  *    {
  *       'courseName': updatedPath
  *       'id': courseId,
- *       'path': ['dashboard.jpg', 'homeimage.jpg']
+ *       'path': ['dashboard.jpg', 'homeImage.jpg']
  *    },
  *    ...
  * ]
  */
 async function createCourseArray(folders, courses) {
    const path = './updatedImages';
-   let neededFiles = [];
 
    let updatedCourses = await Promise.all(courses.map(async course => {
       let folderIndex = folders.findIndex(folder => folder === fixClassString(course.course_code));
       let newPath = folders[folderIndex];
 
       if (!newPath) {
-         if (neededFiles.indexOf(course.course_code) === -1) {
-            neededFiles.push(course.course_code);
+         return {
+            'success': false,
+            'courseName': fixClassString(course.course_code)
          }
-         return undefined;
       } else {
          let files = await fs.readdir(`${path}/${newPath}`);
          files = files.map(file => `${path}/${newPath}/${file}`);
 
+         //either dashboard or homeimage doesn't exist so warn the user and move on.
+         if (files.length < 2) {
+            return {
+               'success': false,
+               'courseName': fixClassString(course.course_code)
+            }
+         }
+
          return {
+            'success': true,
             'courseName': newPath,
             'id': course.id,
             'path': files
@@ -122,6 +141,53 @@ async function createCourseArray(folders, courses) {
 
    return updatedCourses;
 };
+
+/**
+ * createCourseArrayURL
+ * @param {Array of Course objects} courses 
+ * 
+ * This function reads through and creates the object array to prep the system
+ * to upload files to Canvas in mass. This is only for the URL portion.
+ * 
+ * Course Array should be like this after it finishes: 
+ * [
+ *    {
+ *       'courseName': updatedPath
+ *       'id': courseId,
+ *       'path': ['dashboard.jpg', 'homeImage.jpg']
+ *    },
+ *    ...
+ * ]
+ */
+async function createCourseArrayURL(courses) {
+   return await Promise.all(courses.map(async course => {
+      let url = GITHUB_URL + `/${fixClassString(course.course_code)}`;
+      let files = ['dashboard.jpg', 'homeImage.jpg'];
+
+
+      let results = await Promise.all(files.map(async file => {
+         let {
+            statusCode
+         } = await requestAsync(`${url}/${file}`);
+
+         return statusCode;
+      }));
+
+      if (results.every(result => result === 200)) {
+         return {
+            'success': true,
+            'courseName': fixClassString(course.course_code),
+            'id': course.id,
+            'path': files
+         }
+      } else {
+         return {
+            'success': false,
+            'courseName': fixClassString(course.course_code)
+         }
+      }
+   }));
+}
 
 // --------------------------------- URL FILE UPLOAD ----------------------------
 /**
@@ -134,6 +200,7 @@ async function findPhotoUrl(url) {
    request(url, (err, res) => {
       if (err) throw err;
 
+      // console.log(res.statusCode);
       return res.headers['content-length'];
    });
 }
@@ -310,38 +377,45 @@ async function beginUpload(courses, uploadUrl = false) {
       return;
    }
 
+   let badCourses = [];
    let updatedCourses = await createObjects(courses);
 
-   for (let course of updatedCourses) {
-      let courseId = course.id;
+   await asyncEach(updatedCourses, async course => {
+      if (!course.success) {
+         badCourses.push(course.courseName);
 
-      //have to make sure that the images are uploaded at first
-      for (let image of course.path) {
-         const bytes = fs.statSync(image)['size'];
+      } else {
+         let courseId = course.id;
 
+         await asyncEach(course.path, async image => {
+            if (uploadUrl) {
+               let url = GITHUB_URL + `/${course.courseName}/${getFilename(image)}`;
+               let size = await findPhotoUrl(url);
+               let responseObject = await notifyCanvasFileURL(courseId, url, size);
+               let responseUploadUrl = await uploadCanvasUrl(responseObject, url);
 
-         if (uploadUrl) {
-            let url = GITHUB_URL + `/${course.courseName}/${getFilename(image)}`;
-            let size = await findPhotoUrl(url);
-            let responseObject = await notifyCanvasFileURL(courseId, url, size);
-            let responseUploadUrl = await uploadCanvasUrl(responseObject, url);
+               await checkProgress(responseObject.progress.id);
+            } else {
+               const bytes = fs.statSync(image)['size'];
+               await uploadLocalFileMaster(courseId, image, bytes);
+            }
+         });
 
-            await checkProgress(responseObject.progress.id);
-         } else {
-            await uploadLocalFileMaster(courseId, image, bytes);
+         //since files are uploaded, we are able to go through and change the files.
+         for (let image of course.path) {
+            if (getFilename(image) === 'dashboard.jpg') {
+               const img = filterFiles(await retrieveListOfFiles(courseId), getFilename(image));
+               const updateCourseImageResponse = await updateCourseImage(courseId, img.id);
+               console.log(`Updated dashboard image for ${course.courseName}`);
+            } else {
+               console.log(`Updated banner image for ${course.courseName}`);
+            }
          }
       }
+   });
 
-      //since files are uploaded, we are able to go through and change the files.
-      for (let image of course.path) {
-         if (getFilename(image) === 'dashboard.jpg') {
-            const img = filterFiles(await retrieveListOfFiles(courseId), getFilename(image));
-            const updateCourseImageResponse = await updateCourseImage(courseId, img.id);
-            console.log(`Updated dashboard image for ${course.courseName}`);
-         } else {
-            console.log(`Updated banner image for ${course.courseName}`);
-         }
-      }
+   if (badCourses.length > 0) {
+      console.log('Failed courses: ', badCourses);
    }
 };
 
