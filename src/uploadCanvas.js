@@ -1,6 +1,7 @@
 const _ = require('underscore');
 const fs = require('fs-extra');
 const util = require('util');
+const chalk = require('chalk');
 const canvas = require('canvas-api-wrapper');
 const request = require('request');
 const asyncLib = require('async');
@@ -364,23 +365,9 @@ function uploadFileCanvas(resObj, path) {
 
 //--------------------------------- DRIVER ----------------------------------------
 
-/**
- * beginUpload
- * @param {Array of Course objects} courses 
- * 
- * This function goes through each course object in the array and calls the functions
- * needed to do the job.
- */
-async function beginUpload(courses, uploadUrl = false) {
-   if (!courses) {
-      console.log('No courses object passed in. Please ensure that you are passing in a Canvas course object.');
-      return;
-   }
-
+async function updatePictures(courses, uploadUrl) {
    let badCourses = [];
-   let updatedCourses = await createObjects(courses);
-
-   await asyncEach(updatedCourses, async course => {
+   await asyncEach(courses, async course => {
       if (!course.success) {
          badCourses.push(course.courseName);
 
@@ -414,8 +401,27 @@ async function beginUpload(courses, uploadUrl = false) {
       }
    });
 
+   return badCourses;
+}
+
+/**
+ * beginUpload
+ * @param {Array of Course objects} courses 
+ * 
+ * This function goes through each course object in the array and calls the functions
+ * needed to do the job.
+ */
+async function beginUpload(courses, uploadUrl = false) {
+   if (!courses) {
+      console.log('No courses object passed in. Please ensure that you are passing in a Canvas course object.');
+      return;
+   }
+
+   let updatedCourses = await createObjects(courses);
+   let badCourses = await updatePictures(updatedCourses, uploadUrl);
+
    if (badCourses.length > 0) {
-      console.log('Failed courses: ', badCourses);
+      console.log(chalk.red('\nFailed courses: '), badCourses);
    }
 };
 
