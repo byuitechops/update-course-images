@@ -201,7 +201,6 @@ async function findPhotoUrl(url) {
    request(url, (err, res) => {
       if (err) throw err;
 
-      // console.log(res.statusCode);
       return res.headers['content-length'];
    });
 }
@@ -364,7 +363,15 @@ function uploadFileCanvas(resObj, path) {
 }
 
 //--------------------------------- DRIVER ----------------------------------------
-
+/**
+ * updatePictures
+ * @param {Array} courses 
+ * @param {String} uploadUrl 
+ * 
+ * Update the images in each Canvas course object inside courses array. This will return
+ * an array of courses that didn't go through or had something bad happen (just with the 
+ * images - don't worry!).
+ */
 async function updatePictures(courses, uploadUrl) {
    let badCourses = [];
    await asyncEach(courses, async course => {
@@ -375,27 +382,35 @@ async function updatePictures(courses, uploadUrl) {
          let courseId = course.id;
 
          await asyncEach(course.path, async image => {
-            if (uploadUrl) {
-               let url = GITHUB_URL + `/${course.courseName}/${getFilename(image)}`;
-               let size = await findPhotoUrl(url);
-               let responseObject = await notifyCanvasFileURL(courseId, url, size);
-               let responseUploadUrl = await uploadCanvasUrl(responseObject, url);
+            try {
+               if (uploadUrl) {
+                  let url = GITHUB_URL + `/${course.courseName}/${getFilename(image)}`;
+                  console.log(url);
+                  let size = await findPhotoUrl(url);
+                  let responseObject = await notifyCanvasFileURL(courseId, url, size);
+                  let responseUploadUrl = await uploadCanvasUrl(responseObject, url);
 
-               await checkProgress(responseObject.progress.id);
-            } else {
-               const bytes = fs.statSync(image)['size'];
-               await uploadLocalFileMaster(courseId, image, bytes);
+                  await checkProgress(responseObject.progress.id);
+               } else {
+                  const bytes = fs.statSync(image)['size'];
+                  await uploadLocalFileMaster(courseId, image, bytes);
+               }
+            } catch (err) {
+               if (err) {
+                  console.log(err);
+               }
             }
          });
 
          //since files are uploaded, we are able to go through and change the files.
          for (let image of course.path) {
-            if (getFilename(image) === 'dashboard.jpg') {
-               const img = filterFiles(await retrieveListOfFiles(courseId), getFilename(image));
-               const updateCourseImageResponse = await updateCourseImage(courseId, img.id);
-               console.log(`Updated dashboard image for ${course.courseName}`);
-            } else {
-               console.log(`Updated banner image for ${course.courseName}`);
+            try {
+               if (getFilename(image) === 'dashboard.jpg') {
+                  const img = filterFiles(await retrieveListOfFiles(courseId), getFilename(image));
+                  const updateCourseImageResponse = await updateCourseImage(courseId, img.id);
+               }
+            } catch (err) {
+               console.log(err);
             }
          }
       }
@@ -417,12 +432,12 @@ async function beginUpload(courses, uploadUrl = false) {
       return;
    }
 
+   //fyi, we are catching the problems with the images inside createObjects so
+   //it is safe to assume that all stuff that happens inside updatePictures will happen.
    let updatedCourses = await createObjects(courses);
    let badCourses = await updatePictures(updatedCourses, uploadUrl);
 
-   if (badCourses.length > 0) {
-      console.log(chalk.red('\nFailed courses: '), badCourses);
-   }
+   if (badCourses.length > 0) console.log(chalk.red('\nFailed courses: '), badCourses);
 };
 
 // --------------------------------- TESTING AND EXPORTS -------------------------------
@@ -462,9 +477,8 @@ async function testing() {
    }
 }
 
-//automatically start the program
 (async () => {
-   //can pass in JSON file in command line
+   //must pass in JSON file in command line
    let fileName = process.argv[2];
 
    if (!fileName) {
