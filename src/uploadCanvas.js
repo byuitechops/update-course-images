@@ -459,24 +459,6 @@ async function getAllCourses(subaccountId) {
    return courses.filter(course => course.account_id === parseInt(subaccountId, '10'));
 }
 
-/**
- * testing()
- * 
- * This will only execute when the global variable, TESTING, is true. Simply set it
- * to false at the top of the program.
- */
-async function testing() {
-   try {
-      let courses = await getAllCourses(112);
-      const beginUploadResponse = await beginUpload(courses);
-   } catch (err) {
-      if (err) {
-         console.log(err);
-         return;
-      }
-   }
-}
-
 (async () => {
    //must pass in JSON file in command line
    let fileName = process.argv[2];

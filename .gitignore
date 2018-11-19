@@ -4,6 +4,6 @@
 /images-backup
 /.nyc_output
 /updatedImages-test
-/src/coursesContent.js
 courses.json
 scrapeResults.json
+/src/prompt.js

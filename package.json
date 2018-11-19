@@ -23,7 +23,6 @@
    "homepage": "https://github.com/byuitechops/update-course-images#readme",
    "dependencies": {
       "async": "^2.6.1",
-      "bluebird": "^3.5.2",
       "canvas-api-wrapper": "^3.3.4",
       "chai": "^4.2.0",
       "chai-like": "^1.1.1",

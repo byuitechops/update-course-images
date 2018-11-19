@@ -10,8 +10,6 @@ const asyncEach = promisify(asyncLib.each);
 
 const CANVAS_URL = 'https://byui.instructure.com';
 
-//TODO: Export results to CSV
-
 /**
  * promptUser
  * @param {callback} promptUserCallback
