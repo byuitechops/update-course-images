@@ -3,6 +3,7 @@
 /images
 /images-backup
 /.nyc_output
+/updatedImages
 /updatedImages-test
 courses.json
 scrapeResults.json
