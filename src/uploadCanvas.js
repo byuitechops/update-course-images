@@ -11,7 +11,7 @@ const TESTING = true;
 // canvas.subdomain = 'byui.test';
 
 const PARENT_FOLDER = 'template';
-const GITHUB_URL = `https://raw.githubusercontent.com/byuitechops/update-course-images/master/updatedImages`;
+const GITHUB_URL = `https://raw.githubusercontent.com/byuitechops/update-course-images-pictures/master/updatedImages`;
 
 const requestAsync = util.promisify(request);
 const asyncEach = util.promisify(asyncLib.each);
@@ -385,7 +385,7 @@ async function updatePictures(courses, uploadUrl) {
             try {
                if (uploadUrl) {
                   let url = GITHUB_URL + `/${course.courseName}/${getFilename(image)}`;
-                  console.log(url);
+
                   let size = await findPhotoUrl(url);
                   let responseObject = await notifyCanvasFileURL(courseId, url, size);
                   let responseUploadUrl = await uploadCanvasUrl(responseObject, url);
