@@ -8,10 +8,10 @@ const asyncLib = require('async');
 
 //change this when you are wanting to run it on McGrath Test # courses
 const TESTING = true;
-canvas.subdomain = 'byui.test';
+// canvas.subdomain = 'byui.test';
 
 const PARENT_FOLDER = 'template';
-const GITHUB_URL = `https://raw.githubusercontent.com/byuitechops/update-course-images-pictures/master/updatedImages`;
+const EQUELLA_URL = `https://content.byui.edu/file/ee553731-00c7-44ff-839e-7c32ccc059d0/1/`;
 
 const requestAsync = util.promisify(request);
 const asyncEach = util.promisify(asyncLib.each);
@@ -162,7 +162,7 @@ async function createCourseArray(folders, courses) {
  */
 async function createCourseArrayURL(courses) {
    return await Promise.all(courses.map(async course => {
-      let url = GITHUB_URL + `/${fixClassString(course.course_code)}`;
+      let url = EQUELLA_URL + `/${fixClassString(course.course_code)}`;
       let files = ['dashboard.jpg', 'homeImage.jpg'];
 
 
@@ -386,7 +386,7 @@ async function updatePictures(courses, uploadUrl) {
          await asyncEach(course.path, async image => {
             try {
                if (uploadUrl) {
-                  let url = GITHUB_URL + `/${course.courseName}/${getFilename(image)}`;
+                  let url = EQUELLA_URL + `/${course.courseName}/${getFilename(image)}`;
 
                   let size = await findPhotoUrl(url);
                   let responseObject = await notifyCanvasFileURL(courseId, url, size);
