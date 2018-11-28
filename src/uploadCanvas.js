@@ -8,7 +8,7 @@ const asyncLib = require('async');
 
 //change this when you are wanting to run it on McGrath Test # courses
 const TESTING = true;
-// canvas.subdomain = 'byui.test';
+canvas.subdomain = 'byui.test';
 
 const PARENT_FOLDER = 'template';
 const GITHUB_URL = `https://raw.githubusercontent.com/byuitechops/update-course-images-pictures/master/updatedImages`;
@@ -374,10 +374,12 @@ function uploadFileCanvas(resObj, path) {
  */
 async function updatePictures(courses, uploadUrl) {
    let badCourses = [];
+   let goodCourses = [];
+   let tempCourses = [];
+
    await asyncEach(courses, async course => {
       if (!course.success) {
          badCourses.push(course.courseName);
-
       } else {
          let courseId = course.id;
 
@@ -404,10 +406,15 @@ async function updatePictures(courses, uploadUrl) {
 
          //since files are uploaded, we are able to go through and change the files.
          for (let image of course.path) {
+            let term = `${course.courseName}_${getFilename(image)}`;
             try {
                if (getFilename(image) === 'dashboard.jpg') {
                   const img = filterFiles(await retrieveListOfFiles(courseId), getFilename(image));
                   const updateCourseImageResponse = await updateCourseImage(courseId, img.id);
+
+                  (tempCourses.includes(`${course.courseName}_homeImage.jpg`)) ? goodCourses.push(course.courseName): tempCourses.push(term);
+               } else {
+                  (tempCourses.includes(`${course.courseName}_dashboard.jpg`)) ? goodCourses.push(course.courseName): tempCourses.push(term);
                }
             } catch (err) {
                console.log(err);
@@ -416,7 +423,10 @@ async function updatePictures(courses, uploadUrl) {
       }
    });
 
-   return badCourses;
+   return {
+      badCourses,
+      goodCourses
+   };
 }
 
 /**
@@ -435,9 +445,10 @@ async function beginUpload(courses, uploadUrl = false) {
    //fyi, we are catching the problems with the images inside createObjects so
    //it is safe to assume that all stuff that happens inside updatePictures will happen.
    let updatedCourses = await createObjects(courses);
-   let badCourses = await updatePictures(updatedCourses, uploadUrl);
+   let results = await updatePictures(updatedCourses, uploadUrl);
 
-   if (badCourses.length > 0) console.log(chalk.red('\nFailed courses: '), badCourses);
+   if (results.goodCourses.length > 0) console.log(chalk.green('\nSuccessful courses: '), results.goodCourses);
+   if (results.badCourses.length > 0) console.log(chalk.red('Failed courses: '), results.badCourses);
 };
 
 // --------------------------------- TESTING AND EXPORTS -------------------------------
@@ -469,14 +480,10 @@ async function getAllCourses(subaccountId) {
    }
 
    try {
-      if (process.argv[2] === 'all') {
-         let courses = await getAllCourses(42);
-         const beginUploadResponse = await beginUpload(courses);
-      } else {
-         let fileContents = JSON.parse(await fs.readFile(fileName, 'utf-8'));
-         //replace TESTING with user's input
-         const beginUploadResponse = await beginUpload(_(fileContents).toArray(), TESTING);
-      }
+      let fileContents = JSON.parse(await fs.readFile(fileName, 'utf-8'));
+
+      //replace TESTING with user's input
+      const beginUploadResponse = await beginUpload(_(fileContents).toArray(), TESTING);
    } catch (err) {
       if (err) {
          console.log(err);
@@ -485,7 +492,6 @@ async function getAllCourses(subaccountId) {
    }
 })();
 
-//we are exporting beginUpload with the requirement that an array of Canvas course objects are being passed in.
 module.exports = {
    beginUpload
 };

@@ -7,4 +7,5 @@
 /updatedImages-test
 courses.json
 scrapeResults.json
+/src/logger.js
 /src/prompt.js
