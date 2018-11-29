@@ -436,7 +436,7 @@ async function updatePictures(courses, uploadUrl) {
  * This function goes through each course object in the array and calls the functions
  * needed to do the job.
  */
-async function beginUpload(courses, uploadUrl = false) {
+async function beginUpload(courses, uploadUrl = false, isChild = false) {
    if (!courses) {
       console.log('No courses object passed in. Please ensure that you are passing in a Canvas course object.');
       return;
@@ -447,8 +447,13 @@ async function beginUpload(courses, uploadUrl = false) {
    let updatedCourses = await createObjects(courses);
    let results = await updatePictures(updatedCourses, uploadUrl);
 
-   if (results.goodCourses.length > 0) console.log(chalk.green('\nSuccessful courses: '), results.goodCourses);
-   if (results.badCourses.length > 0) console.log(chalk.red('Failed courses: '), results.badCourses);
+   if (isChild) {
+      //results contain a list of courses that was successful and a different list of courses that failed.
+      return results;
+   } else {
+      if (results.goodCourses.length > 0) console.log(chalk.green('\nSuccessful courses: '), results.goodCourses);
+      if (results.badCourses.length > 0) console.log(chalk.red('Failed courses: '), results.badCourses);
+   }
 };
 
 // --------------------------------- TESTING AND EXPORTS -------------------------------

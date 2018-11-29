@@ -4,6 +4,7 @@
    "description": "This will update the image that is on the home page and the course image (the one that gets displayed for the course in Dashboard)",
    "main": "index.js",
    "scripts": {
+      "start": "node ./node_modules/child-development-kit/runChild.js",
       "upload": "node ./src/uploadCanvas.js",
       "clean": "node ./src/cleanImages.js",
       "courses": "node ./src/retrieveCourses.js",
@@ -39,7 +40,8 @@
       "prompt": "^1.0.0",
       "puppeteer": "^1.10.0",
       "request": "^2.88.0",
-      "underscore": "^1.9.1"
+      "underscore": "^1.9.1",
+      "child-development-kit": "github:byuitechops/child-development-kit"
    },
    "devDependencies": {
       "nyc": "^13.1.0"
