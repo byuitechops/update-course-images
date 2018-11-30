@@ -77,13 +77,15 @@ function filterFiles(files, name) {
  * This function gets the list of courses and passes it into createCourseArray. It'll
  * get the object array and simply return it.
  */
-async function createObjects(courses, isUrl = false) {
+async function createObjects(courses, isUrl = false, userProvidedPath = '') {
    if (!isUrl) {
-      const filepath = './updatedImages';
+      const filepath = (userProvidedPath === '') ? './updatedImages' : userProvidedPath;
 
       let tempCourses = courses.map(course => fixClassString(course.course_code));
       let files = await fs.readdir(filepath);
       let newFiles = files.filter(file => tempCourses.includes(file));
+
+      console.log(`newFiles: `, newFiles);
       return await createCourseArray(newFiles, courses);
    }
 
@@ -436,7 +438,7 @@ async function updatePictures(courses, uploadUrl) {
  * This function goes through each course object in the array and calls the functions
  * needed to do the job.
  */
-async function beginUpload(courses, uploadUrl = false, isChild = false) {
+async function beginUpload(courses, uploadUrl = false, isChild = false, userProvidedPath = '') {
    if (!courses) {
       console.log('No courses object passed in. Please ensure that you are passing in a Canvas course object.');
       return;
@@ -444,8 +446,8 @@ async function beginUpload(courses, uploadUrl = false, isChild = false) {
 
    //fyi, we are catching the problems with the images inside createObjects so
    //it is safe to assume that all stuff that happens inside updatePictures will happen.
-   let updatedCourses = await createObjects(courses);
-   let results = await updatePictures(updatedCourses, uploadUrl);
+   let updatedCourses = await createObjects(courses, uploadUrl, userProvidedPath);
+   let results = await updatePictures(updatedCourses, uploadUrl, userProvidedPath);
 
    if (isChild) {
       //results contain a list of courses that was successful and a different list of courses that failed.
@@ -475,7 +477,7 @@ async function getAllCourses(subaccountId) {
    return courses.filter(course => course.account_id === parseInt(subaccountId, '10'));
 }
 
-(async () => {
+async function upload() {
    //must pass in JSON file in command line
    let fileName = process.argv[2];
 
@@ -495,8 +497,11 @@ async function getAllCourses(subaccountId) {
          return;
       }
    }
-})();
+};
+
+upload();
 
 module.exports = {
+   upload,
    beginUpload
 };
