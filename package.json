@@ -2,7 +2,7 @@
    "name": "update-course-images",
    "version": "1.0.0",
    "description": "This will update the image that is on the home page and the course image (the one that gets displayed for the course in Dashboard)",
-   "main": "uploadCanvas.js",
+   "main": "./src/uploadCanvas.js",
    "scripts": {
       "upload": "node ./src/uploadCanvas.js",
       "clean": "node ./src/cleanImages.js",
