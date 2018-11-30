@@ -396,7 +396,6 @@ async function updatePictures(courses, uploadUrl) {
                   await checkProgress(responseObject.progress.id);
                } else {
                   const bytes = fs.statSync(image)['size'];
-                  console.log(`Image: `, image);
                   await uploadLocalFileMaster(courseId, image, bytes);
                }
             } catch (err) {
@@ -447,7 +446,6 @@ async function beginUpload(courses, uploadUrl = false, isChild = false, userProv
    //fyi, we are catching the problems with the images inside createObjects so
    //it is safe to assume that all stuff that happens inside updatePictures will happen.
    let updatedCourses = await createObjects(courses, uploadUrl, userProvidedPath);
-   console.log(`updatedCourses: `, updatedCourses);
    let results = await updatePictures(updatedCourses, uploadUrl, userProvidedPath);
 
    if (isChild) {

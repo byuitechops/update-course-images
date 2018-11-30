@@ -2,9 +2,8 @@
    "name": "update-course-images",
    "version": "1.0.0",
    "description": "This will update the image that is on the home page and the course image (the one that gets displayed for the course in Dashboard)",
-   "main": "index.js",
+   "main": "uploadCanvas.js",
    "scripts": {
-      "start": "node ./node_modules/child-development-kit/runChild.js",
       "upload": "node ./src/uploadCanvas.js",
       "clean": "node ./src/cleanImages.js",
       "courses": "node ./src/retrieveCourses.js",
@@ -22,6 +21,7 @@
       "url": "https://github.com/byuitechops/update-course-images/issues"
    },
    "homepage": "https://github.com/byuitechops/update-course-images#readme",
+   "childType": "postImport",
    "dependencies": {
       "async": "^2.6.1",
       "canvas-api-wrapper": "^3.3.4",
@@ -40,8 +40,7 @@
       "prompt": "^1.0.0",
       "puppeteer": "^1.10.0",
       "request": "^2.88.0",
-      "underscore": "^1.9.1",
-      "child-development-kit": "github:byuitechops/child-development-kit"
+      "underscore": "^1.9.1"
    },
    "devDependencies": {
       "nyc": "^13.1.0"
