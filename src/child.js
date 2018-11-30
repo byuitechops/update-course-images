@@ -14,12 +14,20 @@
  * in github.com/byuitechops/upload-course-images.
  */
 
+const fs = require('fs');
 const canvas = require('canvas-wrapper');
 const uploader = require('./uploadCanvas');
 
 const TESTING = true;
 
 module.exports = async (course, stepCallback) => {
+   /**
+    * retrieveCourse
+    * @param {Int} courseId 
+    * @param {Callback} callback 
+    * 
+    * This function uses Daniel's Canvas wrapper to get the Canvas Course Object as an array.
+    */
    function retrieveCourse(courseId, callback) {
       canvas.get(`/api/v1/courses/${courseId}`, (err, data) => {
          if (err) {
@@ -31,6 +39,12 @@ module.exports = async (course, stepCallback) => {
       });
    }
 
+   /**
+    * handleDefault
+    * @param {Callback} callback 
+    * 
+    * 
+    */
    function handleDefault(callback) {
       retrieveCourse(course.info.canvasOU, async (err, data) => {
          if (err) {
@@ -54,7 +68,14 @@ module.exports = async (course, stepCallback) => {
       return;
    }
 
+   /**
+    * handleLocalFile
+    * @param {Callback} callback 
+    * 
+    * 
+    */
    function handleLocalFile(callback) {
+      //insert checking file here
       let fileLocation = course.info.bannerDashboardImages.fileLocation;
 
       if (!fileLocation) {
@@ -84,6 +105,9 @@ module.exports = async (course, stepCallback) => {
       return;
    }
 
+   /*********************************************************
+    *********************** START HERE **********************
+    *********************************************************/
    try {
       course.info.bannerDashboardImages = {
          type: 'local',

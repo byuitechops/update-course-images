@@ -85,8 +85,7 @@ async function createObjects(courses, isUrl = false, userProvidedPath = '') {
       let files = await fs.readdir(filepath);
       let newFiles = files.filter(file => tempCourses.includes(file));
 
-      console.log(`newFiles: `, newFiles);
-      return await createCourseArray(newFiles, courses);
+      return await createCourseArray(newFiles, courses, userProvidedPath);
    }
 
    return await createCourseArrayURL(courses);
@@ -109,8 +108,8 @@ async function createObjects(courses, isUrl = false, userProvidedPath = '') {
  *    ...
  * ]
  */
-async function createCourseArray(folders, courses) {
-   const path = './updatedImages';
+async function createCourseArray(folders, courses, userProvidedPath = '') {
+   const path = (userProvidedPath === '') ? './updatedImages' : userProvidedPath;
 
    let updatedCourses = await Promise.all(courses.map(async course => {
       let folderIndex = folders.findIndex(folder => folder === fixClassString(course.course_code));
@@ -397,6 +396,7 @@ async function updatePictures(courses, uploadUrl) {
                   await checkProgress(responseObject.progress.id);
                } else {
                   const bytes = fs.statSync(image)['size'];
+                  console.log(`Image: `, image);
                   await uploadLocalFileMaster(courseId, image, bytes);
                }
             } catch (err) {
@@ -447,6 +447,7 @@ async function beginUpload(courses, uploadUrl = false, isChild = false, userProv
    //fyi, we are catching the problems with the images inside createObjects so
    //it is safe to assume that all stuff that happens inside updatePictures will happen.
    let updatedCourses = await createObjects(courses, uploadUrl, userProvidedPath);
+   console.log(`updatedCourses: `, updatedCourses);
    let results = await updatePictures(updatedCourses, uploadUrl, userProvidedPath);
 
    if (isChild) {
