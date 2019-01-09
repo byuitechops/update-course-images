@@ -54,7 +54,7 @@ also requires an array of course objects from the Canvas API (please look at the
 
 ```sh
 $ git clone https://github.com/byuitechops/update-course-images.git
-$ cd update-course-image
+$ cd update-course-images
 $ npm i
 $ ${Insert whatever your OS allows shown in below code snippet}
 ```
