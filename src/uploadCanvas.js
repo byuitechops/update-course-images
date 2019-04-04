@@ -11,7 +11,7 @@ const TESTING = true;
 // canvas.subdomain = 'byui.test';
 
 const PARENT_FOLDER = 'template';
-const EQUELLA_URL = `https://content.byui.edu/file/ee553731-00c7-44ff-839e-7c32ccc059d0/1/`;
+const EQUELLA_URL = `https://content.byui.edu/integ/gen/ee553731-00c7-44ff-839e-7c32ccc059d0/0/`;
 
 const requestAsync = util.promisify(request);
 const asyncEach = util.promisify(asyncLib.each);
